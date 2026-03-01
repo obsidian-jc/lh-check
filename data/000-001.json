@@ -1,0 +1,512 @@
+{
+  "saveName": "000-001",
+  "dong": "000-001",
+  "date": "2026-03-01",
+  "leave": "",
+  "type": "",
+  "tot": 49,
+  "ok": 0,
+  "ng": 0,
+  "at": "2026. 3. 1. 오후 10:03:59",
+  "inspCount": 1,
+  "state": [
+    [
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  ],
+  "notes": [
+    [
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  ],
+  "photos": [],
+  "memo": "매ㄱ북",
+  "recs": [
+    {
+      "tag": "01",
+      "title": "출입 및 보안",
+      "items": [
+        {
+          "item": "현관 도어락 / 열쇠 작동 상태",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "현관문 잠금 정상 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "창문 잠금장치 전체 확인",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "베란다 문 잠금 및 유리 파손 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "02",
+      "title": "누수 및 결로",
+      "items": [
+        {
+          "item": "천장 누수 흔적 (얼룩, 곰팡이)",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "욕실·화장실 천장 및 벽면 누수",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "싱크대 하부장 내 누수 흔적",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "세탁기 배수구 주변 물기",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "창문 주변 결로 및 곰팡이 흔적",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "벽 모서리·바닥 경계 부위 결로",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "03",
+      "title": "도배·장판·바닥",
+      "items": [
+        {
+          "item": "도배 들뜸, 찢어짐, 오염 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "벽면 낙서, 구멍, 심한 오염",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "장판 찢어짐, 들뜸, 변색",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "마루 / 강마루 긁힘, 부풀음, 단차",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "타일 깨짐 또는 줄눈 탈락 (욕실, 주방)",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "04",
+      "title": "전기 설비",
+      "items": [
+        {
+          "item": "전기 차단기 (분전반) 정상 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "콘센트 파손 및 작동 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "조명 기구 파손 및 작동 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "환기팬 (욕실, 주방) 작동 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "인터폰 / 비디오폰 작동 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "전기 계량기 수치 기록",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "05",
+      "title": "가스 설비",
+      "items": [
+        {
+          "item": "가스 밸브 잠금 상태 확인",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "가스 누출 냄새 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "가스레인지 또는 인덕션 상태",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "가스 계량기 수치 기록",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "보일러 정상 작동 여부 (전원, 에러코드)",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "보일러 배기구 막힘 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "06",
+      "title": "수도·배관",
+      "items": [
+        {
+          "item": "수도 계량기 수치 기록",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "주방 싱크대 수도꼭지 누수 및 작동",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "욕실 세면대 / 샤워기 누수 및 배수",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "양변기 작동 및 누수 (탱크, 바닥 실링)",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "세탁기 급수·배수 배관 상태",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "바닥 배수구 악취 및 막힘 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "07",
+      "title": "창호·샤시",
+      "items": [
+        {
+          "item": "창문 개폐 이상 여부 (뻑뻑함, 탈선)",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "방충망 파손 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "유리 깨짐 또는 실링 탈락",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "베란다 새시 틈새 바람 유입 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "08",
+      "title": "옵션 가구·가전",
+      "items": [
+        {
+          "item": "붙박이장 도어 경첩, 레일 상태",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "주방 상하부장 경첩·레일 파손 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "09",
+      "title": "청결·위생",
+      "items": [
+        {
+          "item": "전체 청소 상태 (먼지, 이물질)",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "음식물 쓰레기 방치 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "해충 흔적 (바퀴벌레, 쥐 등)",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "악취 여부",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "에어컨 / 환기구 먼지 및 곰팡이",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    },
+    {
+      "tag": "10",
+      "title": "사진 촬영",
+      "items": [
+        {
+          "item": "현관 진입 전 전경 촬영",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "각 실별 전체 사진 촬영",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "하자 부위 근접 사진 촬영",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "계량기 수치 사진 (전기·가스·수도)",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        },
+        {
+          "item": "보일러 에러코드 / 작동 화면 촬영",
+          "st": null,
+          "note": "",
+          "phCnt": 0
+        }
+      ]
+    }
+  ]
+}
