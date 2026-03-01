@@ -115,7 +115,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue','Apple SD Got
 .cmp-worse{background:#fef2f2;color:var(--red)}
 .cmp-better{background:#eff6ff;color:var(--mid)}
 
-/* 세대 목록 관리 */
+/* 사진 라이트박스 */
+.lightbox{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center}
+.lightbox.show{display:flex}
+.lightbox img{max-width:96vw;max-height:80vh;border-radius:10px;object-fit:contain}
+.lightbox-close{position:absolute;top:16px;right:18px;color:#fff;font-size:28px;cursor:pointer;line-height:1;background:rgba(0,0,0,.4);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+.lightbox-info{color:#fff;font-size:12px;margin-top:10px;opacity:.7}
+.lightbox-nav{display:flex;gap:16px;margin-top:14px}
+.lnav-btn{background:rgba(255,255,255,.15);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;padding:8px 20px;cursor:pointer}
+
 .unit-mgr-btn{width:100%;padding:11px;background:linear-gradient(135deg,#1a4a8a,#2563b8);color:#fff;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px}
 .unit-mgr-btn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2}
 .unit-filter-bar{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
@@ -451,6 +459,11 @@ input[type=file]{display:none}
         💡 github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token → <b>repo</b> 권한 체크
       </div>
     </div>
+    <div style="background:#fef9c3;border-radius:9px;padding:9px 12px;margin-bottom:12px;font-size:10.5px;color:#92400e;line-height:1.6">
+      📱 <b>iPhone Safari 사용 시</b><br>
+      Safari 설정 → 개인 정보 보호 → <b>크로스 사이트 추적 방지를 OFF</b> 하거나<br>
+      Chrome 앱으로 열면 더 안정적으로 작동해요
+    </div>
     <div style="display:flex;gap:7px">
       <button style="flex:1;padding:11px;border:1.5px solid var(--border);border-radius:9px;background:var(--pale);font-family:inherit;font-size:12px;cursor:pointer" onclick="hideGithubPopup()">취소</button>
       <button style="flex:2;padding:11px;background:#1a3a5c;color:#fff;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer" onclick="saveGithubConfig()">저장</button>
@@ -491,6 +504,17 @@ input[type=file]{display:none}
       <div class="gstep"><div class="gnum">3</div><div class="gtxt"><strong>"홈 화면에 추가" 선택</strong></div></div>
     </div>
     <button class="popup-close" onclick="hideGuide()">확인</button>
+  </div>
+</div>
+
+<!-- 사진 라이트박스 -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="hideLightbox()">✕</button>
+  <img id="lbImg" src="" alt="">
+  <div class="lightbox-info" id="lbInfo"></div>
+  <div class="lightbox-nav">
+    <button class="lnav-btn" onclick="lbNav(-1);event.stopPropagation()">◀ 이전</button>
+    <button class="lnav-btn" onclick="lbNav(1);event.stopPropagation()">다음 ▶</button>
   </div>
 </div>
 
@@ -548,6 +572,18 @@ let memo = '';
 let savedPrefix = localStorage.getItem('lh_savePrefix') || '';
 let ghConfig = JSON.parse(localStorage.getItem('lh_gh') || 'null');
 
+// 동호수 정렬: 숫자 기준 내림차순 (예: 102동305호 > 101동101호)
+function sortDongDesc(keys){
+  return [...keys].sort((a,b)=>{
+    const parse=s=>{const m=s.match(/(\d+)/g);return m?m.map(Number):[]};
+    const na=parse(a),nb=parse(b);
+    for(let i=0;i<Math.max(na.length,nb.length);i++){
+      const d=(nb[i]||0)-(na[i]||0);if(d!==0)return d;
+    }
+    return b.localeCompare(a,'ko');
+  });
+}
+
 // 세대 목록 관리
 let unitList = [];
 try { unitList = JSON.parse(localStorage.getItem('lh_units') || '[]'); } catch(e) {}
@@ -604,10 +640,10 @@ function bldDashboard(){
   const summary=document.getElementById('dashSummary');
   const table=document.getElementById('dashTable');
 
-  // 등록된 세대 목록과 이력 합치기
+  // 등록된 세대 목록과 이력 합치기 — 높은 동호수 순 정렬
   const allDongs = new Set([...unitList]);
   h.forEach(r => allDongs.add(r.dong || r.saveName));
-  const dongArr = [...allDongs];
+  const dongArr = sortDongDesc([...allDongs]);
 
   const byDong={};
   h.forEach(r=>{const key=r.dong||r.saveName;if(!byDong[key])byDong[key]=[];byDong[key].push(r);});
@@ -660,15 +696,15 @@ function bldDashboard(){
     </div>
   `;
 
-  // 테이블
-  let rows='<tr><th>동/호수</th><th>최근 점검일</th><th>경과</th><th>횟수</th><th>이상없음</th><th>요수선</th><th>진행률</th></tr>';
+  let rows='<tr><th>동/호수</th><th>최근 점검일</th><th>경과</th><th>횟수</th><th>이상없음</th><th>요수선</th><th>진행률</th><th>삭제</th></tr>';
   dongArr.forEach(key=>{
     const recs=byDong[key];
     if (!recs || !recs.length) {
-      rows+=`<tr class="unit-row" data-filter="notStarted" onclick="startUnitCheck('${key.replace(/'/g,"\\'")}')">
-        <td class="t-dong">${key}</td>
-        <td colspan="5" style="color:var(--muted);font-size:10.5px">미점검</td>
+      rows+=`<tr class="unit-row" data-filter="notStarted">
+        <td class="t-dong" onclick="startUnitCheck('${key.replace(/'/g,"\\'")}');">${key}</td>
+        <td colspan="5" style="color:var(--muted);font-size:10.5px" onclick="startUnitCheck('${key.replace(/'/g,"\\'")}')">미점검</td>
         <td><span class="day-pill dp-danger">시작전</span></td>
+        <td><button onclick="delDongDash('${key.replace(/'/g,"\\'")}',event)" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:2px 6px">🗑</button></td>
       </tr>`;
       return;
     }
@@ -678,18 +714,31 @@ function bldDashboard(){
     const daysTxt=days===null?'-':days===0?'오늘':days+'일';
     const pct=Math.round((l.ok+l.ng)/l.tot*100);
     const filter = l.ng>0?'ng':(days!==null&&days>14?'overdue':'ok');
-    rows+=`<tr class="unit-row" data-filter="${filter}" onclick="quickLoadDong('${key.replace(/'/g,"\\'")}')">
-      <td class="t-dong">${l.dong||l.saveName}</td>
-      <td>${l.date||'-'}</td>
+    rows+=`<tr class="unit-row" data-filter="${filter}">
+      <td class="t-dong" onclick="quickLoadDong('${key.replace(/'/g,"\\'")}');event.stopPropagation()">${l.dong||l.saveName}</td>
+      <td onclick="quickLoadDong('${key.replace(/'/g,"\\'")}');event.stopPropagation()">${l.date||'-'}</td>
       <td><span class="day-pill ${dpClass}">${daysTxt}</span></td>
       <td>${recs.length}회</td>
       <td class="t-ok">${l.ok}</td>
       <td class="t-ng">${l.ng>0?'⚠'+l.ng:'-'}</td>
       <td>${pct}%</td>
+      <td><button onclick="delDongDash('${key.replace(/'/g,"\\'")}',event)" style="background:none;border:none;color:var(--red);font-size:14px;cursor:pointer;padding:2px 6px">🗑</button></td>
     </tr>`;
   });
   if (!dongArr.length) rows += '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">등록된 세대가 없습니다<br><small>위 세대 목록 관리 버튼을 눌러 추가하세요</small></td></tr>';
   table.innerHTML=rows;
+}
+
+function delDongDash(key, e){
+  if(e) e.stopPropagation();
+  if(!confirm(`"${key}" 세대를 현황판에서 삭제할까요?\n(이력과 세대 목록 모두 삭제됩니다)`)) return;
+  // 이력 삭제
+  let h=[];try{h=JSON.parse(localStorage.getItem('lh_hist')||'[]');}catch(ex){}
+  h=h.filter(r=>(r.dong||r.saveName)!==key);
+  localStorage.setItem('lh_hist',JSON.stringify(h));
+  // 세대 목록 삭제
+  unitList=unitList.filter(u=>u!==key); saveUnits();
+  bldDashboard(); toast(`🗑 "${key}" 삭제됨`);
 }
 
 function filterUnits(btn, type) {
@@ -838,10 +887,28 @@ function resz(src,max,q,cb){
   img.src=src;
 }
 
+// 라이트박스
+let lbPhotos=[],lbIdx=0;
+function openLightbox(si,ii,pi){
+  lbPhotos=photos[si][ii];lbIdx=pi;
+  showLbPhoto();
+  document.getElementById('lightbox').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function showLbPhoto(){
+  const p=lbPhotos[lbIdx];
+  document.getElementById('lbImg').src=p?p.d:'';
+  document.getElementById('lbInfo').textContent=`${lbIdx+1} / ${lbPhotos.length}`;
+}
+function lbNav(d){lbIdx=(lbIdx+d+lbPhotos.length)%lbPhotos.length;showLbPhoto();}
+function hideLightbox(){document.getElementById('lightbox').classList.remove('show');document.body.style.overflow='';}
+function closeLightbox(e){if(e.target===document.getElementById('lightbox'))hideLightbox();}
+
 function rThumb(si,ii){
   document.getElementById(`th${si}_${ii}`).innerHTML=
-    photos[si][ii].map((p,pi)=>`<div class="pthumb"><img src="${p.d}"><button class="pdel" onclick="delP(${si},${ii},${pi})">✕</button></div>`).join('');
+    photos[si][ii].map((p,pi)=>`<div class="pthumb" onclick="openLightbox(${si},${ii},${pi})"><img src="${p.d}"><button class="pdel" onclick="delP(${si},${ii},${pi});event.stopPropagation()">✕</button></div>`).join('');
 }
+
 function delP(si,ii,pi){photos[si][ii].splice(pi,1);rThumb(si,ii);}
 
 function countPhotos(ph){
@@ -1031,7 +1098,8 @@ function bldHist(){
     byDong[key].push(r);byDongIdx[key].push(i);
   });
   let out='';
-  Object.keys(byDong).forEach(key=>{
+  const sortedKeys = sortDongDesc(Object.keys(byDong));
+  sortedKeys.forEach(key=>{
     const recs=byDong[key];const idxs=byDongIdx[key];const latest=recs[0];
     const days=calcElapsed(latest.date);
     const epClass=days===null?'':days<=14?'ep-safe':days<=30?'ep-warn':'ep-danger';
@@ -1313,6 +1381,29 @@ function updateGhStatus(){
   else{el.style.display='block';el.style.background='#fef9c3';el.style.color='#92400e';el.textContent='⚠ GitHub 미설정 — 아래 설정 버튼을 눌러주세요';}
 }
 
+function ghHeaders(){
+  // Safari 호환: Bearer 방식 사용 (token 방식은 Safari에서 CORS 오류 발생 가능)
+  return{
+    'Authorization':`Bearer ${ghConfig.token}`,
+    'Accept':'application/vnd.github.v3+json',
+    'Content-Type':'application/json',
+    'X-GitHub-Api-Version':'2022-11-28'
+  };
+}
+
+async function ghFetch(url, opts={}, timeoutMs=15000){
+  // AbortController 제거 - Safari/앱 환경에서 postMessage 충돌 오류 발생
+  try{
+    const res=await fetch(url, opts);
+    return res;
+  }catch(e){
+    if(e.message&&(e.message.includes('NetworkError')||e.message.includes('Failed to fetch')||e.message.includes('Load failed'))){
+      throw new Error('Safari 네트워크 차단\n\n해결방법:\n① Safari 설정 → 개인 정보 보호 → 크로스 사이트 추적 방지 OFF\n② 또는 Chrome 앱으로 열기');
+    }
+    throw e;
+  }
+}
+
 async function doSaveGithub(){
   const dong=document.getElementById('inDong').value.trim();
   const date=document.getElementById('inDate').value;
@@ -1327,22 +1418,41 @@ async function doSaveGithub(){
   const ok=recs.reduce((a,s)=>a+s.items.filter(i=>i.st==='ok').length,0);
   const ng=recs.reduce((a,s)=>a+s.items.filter(i=>i.st==='ng').length,0);
   const at=new Date().toLocaleString('ko-KR');
-  const jsonData={saveName,dong,date,leave,type,tot,ok,ng,at,inspCount,state,notes,photos,memo,recs};
-  const content=btoa(unescape(encodeURIComponent(JSON.stringify(jsonData,null,2))));
-  const path=`data/${dong.replace(/\s/g,'_')}.json`;
+  // 사진 제외 버전으로 저장 (용량 초과 방지)
+  const jsonData={saveName,dong,date,leave,type,tot,ok,ng,at,inspCount,state,notes,photos:[],memo,recs};
+  let content;
+  try{ content=btoa(unescape(encodeURIComponent(JSON.stringify(jsonData,null,2)))); }
+  catch(e){ toast('⚠ 데이터 변환 오류: '+e.message); return; }
+  const path=`data/${dong.replace(/[\s/\\]/g,'_')}.json`;
   toast('☁️ GitHub에 저장 중…');
   let sha='';
-  try{const chk=await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/${path}`,{headers:{'Authorization':`token ${ghConfig.token}`,'Accept':'application/vnd.github.v3+json'}});if(chk.ok){const j=await chk.json();sha=j.sha||'';}}catch(e){}
-  const body={message:`점검 저장: ${dong} ${date}`,content};if(sha)body.sha=sha;
   try{
-    const res=await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/${path}`,{method:'PUT',headers:{'Authorization':`token ${ghConfig.token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+    const chk=await ghFetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/${path}`,{headers:ghHeaders()});
+    if(chk.ok){const j=await chk.json();sha=j.sha||'';}
+    else if(chk.status===401){toast('⚠ 토큰 인증 실패\n토큰 만료 여부와 repo 권한을 확인해주세요');return;}
+    else if(chk.status===404){/* 파일 없음 = 신규, 정상 */}
+  }catch(e){toast(`⚠ ${e.message}`);return;}
+  const body={message:`점검 저장: ${dong} ${date}`,content};
+  if(sha) body.sha=sha;
+  try{
+    const res=await ghFetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/${path}`,{method:'PUT',headers:ghHeaders(),body:JSON.stringify(body)});
     if(res.ok){
       try{const h=JSON.parse(localStorage.getItem('lh_hist')||'[]');h.unshift({saveName,dong,date,leave,type,tot,ok,ng,at,inspCount,state,notes,photos,memo,recs});localStorage.setItem('lh_hist',JSON.stringify(h.slice(0,30)));}catch(e){}
       await updateGithubSummary();
-      toast(`✅ GitHub 저장 완료!`);
+      toast('✅ GitHub 저장 완료!');
       setTimeout(()=>{try{const ds=date.replace(/-/g,'');const wb=makeXLSX(saveName,dong,date,leave,type,recs,tot,ok,ng,inspCount);dlBlob(new Blob([wb],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`${saveName}_${ds}.xlsx`);setTimeout(()=>toast('📊 엑셀도 저장됨!'),800);}catch(e){}},1000);
-    }else{const err=await res.json();toast(`⚠ GitHub 오류: ${err.message||res.status}`);}
-  }catch(e){toast(`⚠ 네트워크 오류: ${e.message}`);}
+    }else{
+      let msg='알 수 없는 오류';
+      try{const err=await res.json();msg=err.message||res.status;}catch(e){}
+      if(res.status===401) msg='토큰 인증 실패 — 토큰을 다시 확인해주세요';
+      else if(res.status===403) msg='권한 없음 — 토큰에 repo 권한이 있는지 확인해주세요';
+      else if(res.status===404) msg='저장소를 찾을 수 없어요 — 사용자명/저장소명을 확인해주세요';
+      else if(res.status===422) msg='데이터 오류 — SHA가 맞지 않아요. 다시 시도해주세요';
+      toast(`⚠ GitHub 오류: ${msg}`);
+    }
+  }catch(e){
+    toast(`⚠ ${e.message}`);
+  }
 }
 
 async function updateGithubSummary(){
@@ -1353,9 +1463,9 @@ async function updateGithubSummary(){
     const summary={updated:new Date().toISOString(),total:Object.keys(byDong).length,units:Object.values(byDong).map(r=>({dong:r.dong,date:r.date,inspCount:r.inspCount||1,ok:r.ok,ng:r.ng,tot:r.tot,leave:r.leave||''}))};
     const content=btoa(unescape(encodeURIComponent(JSON.stringify(summary,null,2))));
     let sha='';
-    try{const chk=await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data/summary.json`,{headers:{'Authorization':`token ${ghConfig.token}`,'Accept':'application/vnd.github.v3+json'}});if(chk.ok){const j=await chk.json();sha=j.sha||'';}}catch(e){}
+    try{const chk=await ghFetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data/summary.json`,{headers:ghHeaders()});if(chk.ok){const j=await chk.json();sha=j.sha||'';}}catch(e){}
     const body={message:'summary 업데이트',content};if(sha)body.sha=sha;
-    await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data/summary.json`,{method:'PUT',headers:{'Authorization':`token ${ghConfig.token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify(body)});
+    await ghFetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data/summary.json`,{method:'PUT',headers:ghHeaders(),body:JSON.stringify(body)});
   }catch(e){}
 }
 
@@ -1363,13 +1473,17 @@ async function loadFromGithub(){
   if(!ghConfig||!ghConfig.token){toast('⚠ GitHub 설정이 필요해요 — 저장 → GitHub 설정');return;}
   toast('☁️ GitHub에서 불러오는 중…');
   try{
-    const res=await fetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data`,{headers:{'Authorization':`token ${ghConfig.token}`,'Accept':'application/vnd.github.v3+json'}});
-    if(!res.ok){toast('⚠ data 폴더가 없어요. 먼저 저장해주세요');return;}
+    const res=await ghFetch(`https://api.github.com/repos/${ghConfig.user}/${ghConfig.repo}/contents/data`,{headers:ghHeaders()});
+    if(!res.ok){
+      if(res.status===401){toast('⚠ 토큰 인증 실패 — 토큰을 다시 확인해주세요');return;}
+      if(res.status===404){toast('⚠ data 폴더가 없어요. 먼저 저장해주세요');return;}
+      toast(`⚠ 오류 ${res.status}`);return;
+    }
     const files=await res.json();
     const jsonFiles=files.filter(f=>f.name.endsWith('.json')&&f.name!=='summary.json');
     if(!jsonFiles.length){toast('⚠ 저장된 데이터가 없어요');return;}
     showGithubFileList(jsonFiles);
-  }catch(e){toast(`⚠ 오류: ${e.message}`);}
+  }catch(e){toast(`⚠ ${e.message}`);}
 }
 
 function showGithubFileList(files){
