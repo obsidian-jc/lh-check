@@ -931,31 +931,62 @@ function loadFile(e){
   e.target.value='';
 }
 
+function safeState(raw){
+  // 불러온 데이터의 배열이 SEC 구조와 다를 때 안전하게 맞춰줌
+  return SEC.map((sec,si)=>
+    sec.items.map((_,ii)=>{
+      try{ return (raw&&raw[si]&&raw[si][ii]!==undefined)?raw[si][ii]:null; }
+      catch(e){ return null; }
+    })
+  );
+}
+function safeNotes(raw){
+  return SEC.map((sec,si)=>
+    sec.items.map((_,ii)=>{
+      try{ return (raw&&raw[si]&&raw[si][ii]!==undefined)?raw[si][ii]:''; }
+      catch(e){ return ''; }
+    })
+  );
+}
+function safePhotos(raw){
+  return SEC.map((sec,si)=>
+    sec.items.map((_,ii)=>{
+      try{ return (raw&&raw[si]&&Array.isArray(raw[si][ii]))?raw[si][ii]:[]; }
+      catch(e){ return []; }
+    })
+  );
+}
+
 function applyData(data,setPrev){
+  if(!data){toast('⚠ 데이터가 비어있어요');return;}
   if(setPrev) prevData=data;
-  if(data.dong) document.getElementById('inDong').value=data.dong;
-  if(data.leave) document.getElementById('inLeave').value=data.leave;
-  if(data.type) document.getElementById('inType').value=data.type;
+  try{if(data.dong) document.getElementById('inDong').value=data.dong;}catch(e){}
+  try{if(data.leave) document.getElementById('inLeave').value=data.leave;}catch(e){}
+  try{if(data.type) document.getElementById('inType').value=data.type;}catch(e){}
   if(data.state){
-    state=data.state;
-    notes=data.notes||SEC.map(s=>s.items.map(()=>''));
-    photos=data.photos||SEC.map(s=>s.items.map(()=>[]));
+    state  = safeState(data.state);
+    notes  = safeNotes(data.notes);
+    photos = safePhotos(data.photos);
     SEC.forEach((_,si)=>SEC[si].items.forEach((_,ii)=>{
-      upUI(si,ii);
-      const nt=document.getElementById(`nt${si}_${ii}`);
-      if(nt) nt.value=notes[si][ii]||'';
-      rThumb(si,ii);
+      try{upUI(si,ii);}catch(e){}
+      try{
+        const nt=document.getElementById(`nt${si}_${ii}`);
+        if(nt) nt.value=notes[si][ii]||'';
+      }catch(e){}
+      try{rThumb(si,ii);}catch(e){}
     }));
-    upProg();
+    try{upProg();}catch(e){}
   }
   inspCount=data.inspCount||0;
   memo=data.memo||'';
-  const ma=document.getElementById('memoArea');
-  if(ma) ma.value=memo;
+  try{
+    const ma=document.getElementById('memoArea');
+    if(ma) ma.value=memo;
+  }catch(e){}
   if(data.saveName){savedPrefix=data.saveName;localStorage.setItem('lh_savePrefix',savedPrefix);}
-  document.getElementById('cmpBtn').style.display='flex';
-  upHeaderChips();
-  upElapsed(data.date);
+  try{document.getElementById('cmpBtn').style.display='flex';}catch(e){}
+  try{upHeaderChips();}catch(e){}
+  try{upElapsed(data.date);}catch(e){}
 }
 
 function calcElapsed(dateStr){
@@ -1498,8 +1529,15 @@ function showGithubFileList(files){
 
 async function loadGithubFile(url){
   toast('📂 불러오는 중…');hideGithubFileOverlay();
-  try{const res=await fetch(url);const data=await res.json();applyData(data,true);toast(`✅ "${data.dong||data.saveName}" 불러오기 완료!`);goView('check');}
-  catch(e){toast(`⚠ 불러오기 오류: ${e.message}`);}
+  try{
+    const res=await fetch(url);
+    if(!res.ok){toast(`⚠ 파일 불러오기 실패 (${res.status})`);return;}
+    const data=await res.json();
+    if(!data||typeof data!=='object'){toast('⚠ 파일 형식이 올바르지 않아요');return;}
+    applyData(data,true);
+    toast(`✅ "${data.dong||data.saveName||'파일'}" 불러오기 완료!`);
+    goView('check');
+  }catch(e){toast(`⚠ 불러오기 오류: ${e.message}`);}
 }
 function hideGithubFileOverlay(){document.getElementById('githubFileOverlay').style.display='none';document.body.style.overflow='';}
 
