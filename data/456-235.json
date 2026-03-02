@@ -5,10 +5,10 @@
   "leave": "",
   "type": "",
   "tot": 49,
-  "ok": 1,
+  "ok": 2,
   "ng": 0,
-  "at": "2026. 3. 2. 오후 7:30:14",
-  "inspCount": 2,
+  "at": "2026. 3. 2. 오후 7:59:13",
+  "inspCount": 3,
   "state": [
     [
       null,
@@ -25,7 +25,7 @@
       null
     ],
     [
-      null,
+      "ok",
       null,
       null,
       null,
@@ -232,9 +232,9 @@
       "items": [
         {
           "item": "도배 들뜸, 찢어짐, 오염 여부",
-          "st": null,
+          "st": "ok",
           "note": "",
-          "phCnt": 0
+          "phCnt": 1
         },
         {
           "item": "벽면 낙서, 구멍, 심한 오염",
