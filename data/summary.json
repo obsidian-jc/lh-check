@@ -1,11 +1,11 @@
 {
-  "updated": "2026-03-02T10:25:44.910Z",
+  "updated": "2026-03-02T10:30:16.120Z",
   "total": 1,
   "units": [
     {
       "dong": "456-235",
       "date": "2026-03-02",
-      "inspCount": 1,
+      "inspCount": 2,
       "ok": 1,
       "ng": 0,
       "tot": 49,
