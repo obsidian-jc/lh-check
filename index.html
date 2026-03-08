@@ -1,0 +1,3765 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>LH 공가점검</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#f0f4f8;color:#1e293b;max-width:480px;margin:0 auto;min-height:100vh;}
+button{font-family:inherit;cursor:pointer;border:none;outline:none;}
+input,select,textarea{font-family:inherit;outline:none;}
+.hdr{background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px #00000010;}
+.hdr-top{display:flex;align-items:center;padding:13px 16px 10px;}
+.hdr-title{font-size:18px;font-weight:900;color:#2563eb;}
+.hdr-sub{font-size:10px;color:#94a3b8;font-weight:600;margin-top:1px;}
+.hdr-badge{background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:#2563eb;margin-left:auto;white-space:nowrap;}
+.tabs{display:flex;border-top:1px solid #e2e8f0;}
+.tab{flex:1;padding:10px 4px;background:none;border:none;border-bottom:2px solid transparent;color:#94a3b8;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:4px;}
+.tab.on{border-bottom-color:#2563eb;color:#2563eb;}
+.pad{padding:16px;}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px #0000000a;}
+.ct{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;}
+.lbl{font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:5px;}
+.inp{width:100%;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 12px;font-size:15px;background:#fff;color:#1e293b;}
+input[type=date]{color-scheme:light;}
+textarea.inp{resize:none;}
+.chk-row{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:10px;gap:4px;}
+.chk-name{font-size:11px;font-weight:700;color:#475569;min-width:52px;}
+.chk-grp{display:flex;gap:4px;}
+.chk-btn{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid #bbf7d0;background:#f0fdf4;color:#15803d;cursor:pointer;transition:all 0.15s;}
+.chk-btn.이상{background:#fff7ed;color:#c2410c;border-color:#fed7aa;}
+.chk-btn.긴급{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
+.sec-hdr{display:flex;align-items:center;gap:7px;margin-bottom:9px;}
+.sec-div{flex:1;height:1px;background:#e2e8f0;}
+.chk-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.dong-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
+.dong-btn{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:800;border:2px solid #94a3b8;background:#e2e8f0;color:#1e293b;}
+.dong-btn.on{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
+.unit-grid{display:grid;gap:4px;max-height:220px;overflow-y:auto;padding:2px;}
+.u-btn{width:100%;padding:6px 2px;border-radius:8px;font-size:11px;font-weight:800;border:1.5px solid #e2e8f0;background:#fff;color:#1e293b;position:relative;}
+.u-btn.sel{background:#2563eb;color:#fff;border-color:#2563eb;}
+.u-btn.s점검전{background:#f1f5f9;color:#475569;border-color:#e2e8f0;}
+.u-btn.s입주가능{background:#f0fdf4;color:#15803d;border-color:#86efac;}
+.u-btn.s수리중{background:#fff7ed;color:#c2410c;border-color:#fed7aa;}
+.u-btn.s하자있음{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
+.u-btn.s입주청소전{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;}
+.multi-dot{position:absolute;top:-4px;right:-4px;background:#7c3aed;color:#fff;border-radius:50%;width:14px;height:14px;font-size:8px;font-weight:900;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.sel-info{margin-top:10px;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.tag{border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;}
+.save-main{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-radius:14px;padding:16px;font-size:16px;font-weight:900;margin-bottom:30px;box-shadow:0 4px 18px #2563eb44;}
+.saved-box{background:linear-gradient(135deg,#eff6ff,#dbeafe);border:2px solid #bfdbfe;border-radius:20px;padding:22px 20px;text-align:center;margin-bottom:16px;}
+.sbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;}
+.sbadge .dot{width:5px;height:5px;border-radius:50%;}
+.abox{margin-top:10px;background:#fff;border-radius:14px;padding:14px 16px;text-align:left;}
+.abox.pdf{border:1.5px solid #bae6fd;}
+.abox.xls{border:1.5px solid #bbf7d0;}
+.abox.bak{border:1.5px solid #e9d5ff;}
+.abox-ttl{font-weight:800;font-size:13px;margin-bottom:3px;}
+.abox-ttl.pdf{color:#0369a1;}
+.abox-ttl.xls{color:#15803d;}
+.abox-ttl.bak{color:#7c3aed;}
+.abox-desc{color:#94a3b8;font-size:11px;margin-bottom:10px;line-height:1.6;}
+.abtn{width:100%;padding:12px;border:none;border-radius:11px;color:#fff;font-size:13px;font-weight:900;transition:background .2s;}
+.abtn.pdf{background:#0ea5e9;}
+.abtn.xls{background:#16a34a;}
+.abtn.bak{background:#7c3aed;}
+.abtn.bak2{background:#6d28d9;}
+.abtn.done{background:#15803d;}
+.abtn.loading{background:#94a3b8;}
+.abtn.err{background:#dc2626;}
+.abtn.gray{background:#e2e8f0;color:#475569;}
+.period-btn{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;border:1.5px solid #e2e8f0;background:#fff;color:#475569;}
+.period-btn.on{background:#eff6ff;color:#2563eb;border-color:#2563eb;}
+.rpt-cat{padding:10px 16px;border-radius:12px;font-size:13px;font-weight:800;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;flex:1;}
+.rpt-cat.on{background:#1e293b;color:#fff;border-color:#1e293b;}
+.fname{margin-top:6px;font-size:10px;color:#94a3b8;text-align:center;font-family:monospace;word-break:break-all;}
+.row2{display:flex;gap:8px;margin-top:10px;}
+.row2 button{flex:1;padding:11px;border-radius:12px;font-size:13px;font-weight:700;border:1.5px solid #cbd5e1;background:#fff;color:#475569;}
+.row2 .green{background:#f0fdf4;color:#15803d;border-color:#bbf7d0;}
+.photo-row{display:flex;gap:8px;margin-bottom:12px;}
+.photo-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 8px;border-radius:12px;font-size:13px;font-weight:700;}
+.photo-btn.cam{border:2px dashed #bfdbfe;background:#eff6ff;color:#2563eb;}
+.photo-btn.gal{border:2px dashed #cbd5e1;background:#f0f4f8;color:#475569;}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.photo-item{position:relative;border-radius:10px;overflow:hidden;border:1.5px solid #e2e8f0;aspect-ratio:1;}
+.photo-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-del{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.85);color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.photo-num{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.55);color:#fff;border-radius:5px;padding:1px 6px;font-size:10px;font-weight:700;}
+.no-photo{text-align:center;padding:20px 0;color:#94a3b8;font-size:13px;border:1.5px dashed #e2e8f0;border-radius:10px;}
+.banner{margin-bottom:14px;background:linear-gradient(135deg,#4338ca,#3730a3);border-radius:16px;padding:14px 16px;box-shadow:0 4px 16px #4338ca33;}
+.banner-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.banner-title{font-size:13px;font-weight:900;color:#fff;}
+.banner-tags{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap;}
+.btag{border-radius:20px;padding:2px 8px;font-size:10px;font-weight:800;}
+.banner-units{font-size:11px;color:#c7d2fe;margin-bottom:10px;line-height:1.7;}
+.banner-btn{width:100%;padding:11px;border:1.5px solid rgba(255,255,255,.3);border-radius:12px;background:rgba(255,255,255,.15);color:#fff;font-size:12px;font-weight:800;margin-top:6px;}
+.banner-btn.xls{background:#16a34a;border-color:transparent;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.stat-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:13px 6px;text-align:center;}
+.stat-num{font-size:22px;font-weight:900;}
+.stat-lbl{font-size:10px;color:#94a3b8;font-weight:700;margin-top:2px;}
+.search-inp{width:100%;border:1.5px solid #cbd5e1;border-radius:12px;padding:10px 14px;font-size:15px;background:#fff;color:#1e293b;margin-bottom:12px;}
+.rec-card{background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;margin-bottom:10px;overflow:hidden;}
+.rec-card.sess{border-color:#bfdbfe;box-shadow:0 2px 8px #2563eb22;}
+.rec-hdr{display:flex;align-items:center;gap:10px;padding:13px 14px;border:none;width:100%;text-align:left;background:none;}
+.rec-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.rec-unit{font-size:14px;font-weight:800;flex:1;color:#1e293b;}
+.rec-cnt{background:#f3e8ff;color:#7c3aed;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:800;}
+.rec-date{font-size:11px;color:#94a3b8;}
+.rec-body{padding:12px 14px;border-top:1px solid #e2e8f0;}
+.tl-wrap{display:flex;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
+.tl-item{display:flex;align-items:center;flex-shrink:0;}
+.tl-badge{text-align:center;}
+.tl-type{border-radius:8px;padding:4px 8px;font-size:10px;font-weight:800;}
+.tl-date{font-size:9px;color:#94a3b8;margin-top:2px;}
+.tl-line{width:20px;height:1px;background:#cbd5e1;margin:0 3px;flex-shrink:0;}
+.vac-tag{background:#fef9c3;color:#854d0e;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;display:inline-block;margin-bottom:8px;}
+.issue-txt{color:#c2410c;font-weight:700;font-size:12px;margin-bottom:8px;}
+.notes-txt{font-size:12px;color:#475569;margin-bottom:8px;}
+.thumb-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+.thumb{width:60px;height:60px;object-fit:cover;border-radius:8px;border:1.5px solid #e2e8f0;cursor:pointer;}
+.rec-actions{display:flex;gap:7px;}
+.rec-btn{flex:1;border-radius:10px;padding:9px;font-size:12px;font-weight:700;border:1.5px solid;}
+.rec-btn.add{background:#eff6ff;color:#2563eb;border-color:#bfdbfe;}
+.rec-btn.pdf{background:#e0f2fe;color:#0369a1;border-color:#bae6fd;}
+.rec-btn.del{background:#fff5f5;color:#dc2626;border-color:#fecaca;}
+.del-confirm{background:#fff5f5;border:1.5px solid #fecaca;border-radius:12px;padding:12px 14px;}
+.del-msg{color:#dc2626;font-weight:700;font-size:12px;margin-bottom:10px;}
+.del-row{display:flex;gap:8px;}
+.del-btn{flex:1;border-radius:10px;padding:9px;font-size:12px;font-weight:700;}
+.del-btn.cancel{background:#fff;color:#475569;border:1px solid #cbd5e1;}
+.del-btn.ok{background:#dc2626;color:#fff;border:none;}
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;display:flex;align-items:center;justify-content:center;}
+.viewer img{max-width:95vw;max-height:90vh;border-radius:8px;}
+.v-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:22px;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;border-radius:12px;padding:10px 18px;font-size:13px;font-weight:700;z-index:1000;white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="viewer" id="viewer" style="display:none" onclick="closeViewer()">
+  <img id="viewer-img" src=""/>
+  <button class="v-close">×</button>
+</div>
+<div class="toast" id="toast"></div>
+<input type="file" id="cam-in" accept="image/*" capture="environment" multiple style="display:none"/>
+<input type="file" id="gal-in" accept="image/*" multiple style="display:none"/>
+<input type="file" id="restore-in" accept=".json" style="display:none"/>
+
+<!-- 헤더 -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-title">🏢 LH 공가점검</div>
+      <div class="hdr-sub">양주옥정 A-7블록</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end">
+      <div class="hdr-badge" id="hdr-vac-badge" style="background:#fff7ed;border-color:#fed7aa;color:#c2410c">공가 0세대</div>
+      <div class="hdr-badge" id="hdr-badge">0건</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" id="tab-form" onclick="switchTab('form')">📝 점검입력</button>
+    <button class="tab" id="tab-dash" onclick="switchTab('dash')">📊 현황</button>
+    <button class="tab" id="tab-records" onclick="switchTab('records')">📂 기록</button>
+    <button class="tab" id="tab-report" onclick="switchTab('report')">📄 보고서</button>
+    <button class="tab" id="tab-export" onclick="switchTab('export')">📤 내보내기</button>
+  </div>
+</div>
+
+<!-- 점검입력 -->
+<div class="pad" id="pane-form">
+  <div id="sess-banner"></div>
+  <div id="saved-area"></div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="ct" style="margin-bottom:0">🏗️ 세대 선택</div>
+      <div id="dong-unit-count" style="font-size:11px;color:#64748b;font-weight:600;background:#f1f5f9;border-radius:8px;padding:4px 10px"></div>
+    </div>
+    <div class="dong-wrap" id="dong-wrap"></div>
+    <div class="unit-grid" id="unit-grid"></div>
+    <div id="area-legend"></div>
+    <div id="sel-info"></div>
+  </div>
+  <div id="form-body" style="display:none">
+    <div class="card">
+      <div class="ct">📋 기본 정보</div>
+      <div style="margin-bottom:12px"><label class="lbl">공가 시작일</label><input type="date" class="inp" id="f-vac" onchange="renderVacInfo()"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label class="lbl">점검일</label><input type="date" class="inp" id="f-date"/></div>
+        <div><label class="lbl">점검차수</label>
+          <select class="inp" id="f-type">
+            <option value="1차">1차</option><option value="2차">2차</option><option value="3차">3차</option><option value="4차">4차</option><option value="5차">5차</option>
+            <option value="6차">6차</option><option value="7차">7차</option><option value="8차">8차</option><option value="9차">9차</option><option value="10차">10차</option>
+            <option value="11차">11차</option><option value="12차">12차</option><option value="13차">13차</option><option value="14차">14차</option><option value="15차">15차</option>
+            <option value="16차">16차</option><option value="17차">17차</option><option value="18차">18차</option><option value="19차">19차</option><option value="20차">20차</option>
+          </select>
+        </div>
+      </div>
+      <div id="vac-info-box"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <label class="lbl" style="margin:0">📝 메모</label>
+        <button onclick="insertTime()" style="background:#2563eb;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">⏱ 시간입력</button>
+      </div>
+      <!-- 메모 단축어 버튼 -->
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px" id="memo-shortcuts">
+        <button onclick="insertMemo('✅ 입주가능')"    style="background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">✅ 입주가능</button>
+        <button onclick="insertMemo('🔧 보수필요')"    style="background:#fff7ed;color:#c2410c;border:1.5px solid #fdba74;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">🔧 보수필요</button>
+        <button onclick="insertMemo('🔄 재점검필요')"  style="background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">🔄 재점검</button>
+        <button onclick="insertMemo('📞 AS접수')"      style="background:#faf5ff;color:#7c3aed;border:1.5px solid #c4b5fd;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">📞 AS접수</button>
+        <button onclick="insertMemo('🚨 긴급보수')"    style="background:#fff1f2;color:#be123c;border:1.5px solid #fda4af;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">🚨 긴급보수</button>
+        <button onclick="insertMemo('💧 누수의심')"    style="background:#f0f9ff;color:#0369a1;border:1.5px solid #7dd3fc;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">💧 누수의심</button>
+        <button onclick="insertMemo('🔒 잠금이상')"    style="background:#fefce8;color:#a16207;border:1.5px solid #fde047;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">🔒 잠금이상</button>
+        <button onclick="insertMemo('📸 사진확인요망')" style="background:#f8fafc;color:#475569;border:1.5px solid #cbd5e1;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">📸 사진확인</button>
+      </div>
+      <textarea class="inp" id="f-notes" rows="6" placeholder="특이사항 입력...&#10;⏱ 시간입력 버튼으로 날짜·시간 자동 추가"></textarea>
+    </div>
+
+    <!-- 점검항목 카드 -->
+    <div class="card">
+      <div class="ct">✅ 점검항목</div>
+      <div id="chk-area"></div>
+    </div>
+
+    <div class="card">
+      <div class="ct">📸 사진</div>
+      <div class="photo-row">
+        <button class="photo-btn cam" onclick="document.getElementById('cam-in').click()">📷 카메라</button>
+        <button class="photo-btn gal" onclick="document.getElementById('gal-in').click()">🖼️ 갤러리</button>
+      </div>
+      <div id="photo-area"><div class="no-photo">사진 없음</div></div>
+      <!-- Notion 저장 버튼들 — 사진 추가 시 표시 -->
+      <div id="notion-btn-area" style="display:none;margin-top:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+          <button onclick="uploadPhotoToNotion('camera')"
+            style="padding:11px 6px;background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer">
+            📒 Notion저장
+          </button>
+          <button onclick="triggerNotionGallery()"
+            style="padding:11px 6px;background:linear-gradient(135deg,#1d4ed8,#1e40af);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer">
+            🖼️ 사진첩추가후저장
+          </button>
+        </div>
+        <input type="file" id="notion-gal-in" accept="image/*" multiple style="display:none" onchange="addNotionGalleryPhotos(this)"/>
+      </div>
+      <div id="notion-upload-status" style="font-size:11px;color:#94a3b8;margin-top:6px;text-align:center;display:none"></div>
+    </div>
+    <div class="card">
+      <div class="ct">📊 검침값</div>
+      <div id="meter-area"></div>
+    </div>
+
+    <!-- 최종 점검 결과 -->
+    <div class="card" style="border:2px solid #e2e8f0">
+      <div class="ct">🏁 최종 점검 결과</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="status-btns">
+        <button id="sbtn-점검전" onclick="setStatus('점검전')"
+          style="padding:13px 6px;border-radius:12px;border:2.5px solid #e2e8f0;background:#f1f5f9;color:#475569;font-size:13px;font-weight:800;cursor:pointer;grid-column:1/-1">
+          📋 점검전 (기본값)
+        </button>
+        <button id="sbtn-입주가능" onclick="setStatus('입주가능')"
+          style="padding:13px 6px;border-radius:12px;border:2.5px solid #86efac;background:#fff;color:#15803d;font-size:13px;font-weight:800;cursor:pointer">
+          ✅ 입주가능
+        </button>
+        <button id="sbtn-입주청소전" onclick="setStatus('입주청소전')"
+          style="padding:13px 6px;border-radius:12px;border:2.5px solid #bfdbfe;background:#fff;color:#1d4ed8;font-size:13px;font-weight:800;cursor:pointer">
+          🧹 입주청소전
+        </button>
+        <button id="sbtn-수리중" onclick="setStatus('수리중')"
+          style="padding:13px 6px;border-radius:12px;border:2.5px solid #fed7aa;background:#fff;color:#c2410c;font-size:13px;font-weight:800;cursor:pointer">
+          🔧 수리중
+        </button>
+        <button id="sbtn-하자있음" onclick="setStatus('하자있음')"
+          style="padding:13px 6px;border-radius:12px;border:2.5px solid #fecaca;background:#fff;color:#dc2626;font-size:13px;font-weight:800;cursor:pointer">
+          🚨 하자있음
+        </button>
+      </div>
+      <div id="status-selected" style="text-align:center;font-size:12px;color:#64748b;margin-top:8px;font-weight:700">📋 점검전</div>
+    </div>
+
+    <button class="save-main" onclick="doSave()">💾 저장하기</button>
+    <div id="draft-indicator" style="text-align:center;font-size:11px;color:#94a3b8;margin-top:-22px;margin-bottom:10px;opacity:0;transition:opacity 0.5s">💾 임시저장됨</div>
+  </div>
+  <div id="no-unit" style="text-align:center;padding:40px 0;color:#94a3b8;font-size:14px">👆 위에서 세대를 선택하세요</div>
+</div>
+
+
+<!-- PC 잠금 오버레이 -->
+<div id="pc-lock-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.92);z-index:99999;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="background:#fff;border-radius:20px;padding:28px 24px;width:90%;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.4)">
+    <div style="font-size:28px;margin-bottom:8px">🔒</div>
+    <div style="font-size:17px;font-weight:900;margin-bottom:4px">LH 공가점검 앱</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:18px">비밀번호를 입력해주세요</div>
+    <input id="lock-pw-inp" type="password" placeholder="비밀번호"
+      style="width:100%;padding:13px;border:2px solid #e2e8f0;border-radius:10px;font-size:16px;text-align:center;box-sizing:border-box;margin-bottom:10px;letter-spacing:4px"
+      onkeydown="if(event.key==='Enter')doUnlock()"/>
+    <button onclick="doUnlock()"
+      style="width:100%;padding:13px;background:#1e293b;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer">
+      🔓 잠금 해제
+    </button>
+    <div id="lock-err" style="margin-top:8px;font-size:12px;color:#dc2626;font-weight:700;min-height:16px"></div>
+  </div>
+</div>
+<!-- 기록 -->
+<div class="pad" id="pane-records" style="display:none">
+  <div class="stat-grid" id="stat-grid"></div>
+  <div id="rec-banner"></div>
+  <!-- QR 스캔 버튼 -->
+  <button onclick="openQrScanner()"
+    style="width:100%;margin-bottom:10px;padding:13px;background:linear-gradient(135deg,#1e293b,#334155);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+    <span style="font-size:20px">📷</span> QR코드 스캔 → 세대 바로가기
+  </button>
+  <!-- QR 스캔 뷰 -->
+  <div id="qr-scanner-wrap" style="display:none;margin-bottom:12px;border-radius:14px;overflow:hidden;position:relative;background:#000">
+    <video id="qr-video" style="width:100%;display:block;border-radius:14px" playsinline autoplay muted></video>
+    <canvas id="qr-canvas" style="display:none"></canvas>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+      <div style="width:200px;height:200px;border:3px solid #fff;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.45)"></div>
+    </div>
+    <button onclick="closeQrScanner()"
+      style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:34px;height:34px;font-size:18px;cursor:pointer;line-height:1">✕</button>
+    <div id="qr-status" style="position:absolute;bottom:10px;left:0;right:0;text-align:center;color:#fff;font-size:13px;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,0.8)">QR코드를 네모 안에 맞춰주세요</div>
+  </div>
+  <input class="search-inp" id="search" placeholder="🔍 세대 검색..." oninput="renderRecs()"/>
+  <div id="rec-list"></div>
+</div>
+
+<!-- 현황 대시보드 -->
+<div class="pad" id="pane-dash" style="display:none">
+
+  <!-- 전체 진행률 -->
+  <div class="card" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;margin-bottom:14px">
+    <div style="font-size:13px;font-weight:700;opacity:0.85;margin-bottom:10px">🏢 전체 공가 점검 진행률</div>
+    <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:10px">
+      <div id="dash-pct" style="font-size:44px;font-weight:900;line-height:1">0%</div>
+      <div id="dash-cnt" style="font-size:13px;opacity:0.8;padding-bottom:6px">0 / 0 세대</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.2);border-radius:99px;height:10px;overflow:hidden">
+      <div id="dash-bar" style="height:100%;background:#fff;border-radius:99px;transition:width 0.5s;width:0%"></div>
+    </div>
+  </div>
+
+  <!-- 미점검 세대 빠른 찾기 -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="ct">🔍 미점검 세대 빠른 찾기</div>
+    <div id="dash-untouched" style="font-size:12px;color:#475569;margin-bottom:10px"></div>
+    <div id="dash-unlist" style="display:flex;flex-direction:column;gap:4px;max-height:380px;overflow-y:auto;padding:2px"></div>
+    <!-- 평형 범례 -->
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0">
+      <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px">📐 평형 색상 안내</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">
+        <span style="display:inline-flex;align-items:center;gap:3px;background:#fde68a;border:1.5px solid #f59e0b;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#1e293b">29A · 13평</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;background:#bfdbfe;border:1.5px solid #3b82f6;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#1e293b">36A · 16평</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;background:#a5f3fc;border:1.5px solid #06b6d4;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#1e293b">36B · 16평</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;background:#bbf7d0;border:1.5px solid #22c55e;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#1e293b">46A/B · 19평</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;background:#fecaca;border:1.5px solid #ef4444;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#1e293b">51A · 21평</span>
+        <span style="display:inline-flex;align-items:center;gap:3px;background:#e9d5ff;border:1.5px solid #a855f7;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#1e293b">59A · 24평</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 동별 진행률 -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="ct">🏗️ 동별 진행률</div>
+    <div id="dash-dong-list" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+  </div>
+
+  <!-- 평형별 현황 -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="ct">📐 평형별 현황 <span style="font-size:11px;color:#94a3b8;font-weight:400">· 탭하면 해당 세대 목록</span></div>
+    <div id="dash-area-list" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+    <!-- 평형 클릭 시 세대 목록 -->
+    <div id="area-drill-panel" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0">
+      <div id="area-drill-title" style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:8px"></div>
+      <div id="area-drill-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+
+  <!-- 추가 공가 등록 -->
+  <div class="card" style="border:2px solid #f97316;background:linear-gradient(135deg,#fff7ed,#ffedd5)">
+    <div class="ct" style="color:#f97316">➕ 추가 공가 등록</div>
+    <div style="font-size:12px;color:#475569;margin-bottom:14px;line-height:1.8">
+      새로 공가가 발생한 세대를 등록하면 목록에 자동 반영됩니다.
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <select class="inp" id="new-vac-dong" style="flex:1;min-width:100px" onchange="onNewVacDongChange()">
+        <option value="">동 선택</option>
+      </select>
+      <select class="inp" id="new-vac-ho" style="flex:1;min-width:100px">
+        <option value="">호수 선택</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <select class="inp" id="new-vac-area" style="flex:1">
+        <option value="">평형 선택</option>
+        <option value="17.2">29A (13평)</option>
+        <option value="21.2">36A (16평)</option>
+        <option value="21.3">36B (16평)</option>
+        <option value="27.0">46A/46B (19평)</option>
+        <option value="29.7">51A (21평)</option>
+        <option value="34.5">59A (24평)</option>
+      </select>
+    </div>
+    <button class="abtn" style="background:linear-gradient(135deg,#f97316,#ea580c);font-size:14px;padding:12px" onclick="addNewVacancy()">➕ 공가 등록</button>
+    <div id="new-vac-result" style="margin-top:8px;font-size:12px;font-weight:700"></div>
+    <div id="added-vac-list" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- 보고서 -->
+<div class="pad" id="pane-report" style="display:none">
+
+  <!-- 카테고리 탭 -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px" id="rpt-cat-btns">
+    <button class="rpt-cat on" onclick="switchRptCat('excel',this)">📊 엑셀</button>
+    <button class="rpt-cat" onclick="switchRptCat('pdf',this)">📄 PDF</button>
+    <button class="rpt-cat" onclick="switchRptCat('stat',this)">📅 통계</button>
+    <button class="rpt-cat" onclick="switchRptCat('history',this)">📋 이력</button>
+  </div>
+
+  <!-- ══════ 엑셀 카테고리 ══════ -->
+  <div id="rpt-cat-excel">
+
+    <!-- 점검기록 엑셀 -->
+    <div class="card" style="border:2px solid #16a34a;background:linear-gradient(135deg,#f0fdf4,#dcfce7);margin-bottom:14px">
+      <div class="ct" style="color:#16a34a">📝 점검기록 엑셀</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">기간별 점검 기록을 동별 시트로 저장합니다.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="rpt-period-btns">
+        <button class="period-btn on" data-val="all" onclick="setRptPeriod('all',this)">전체</button>
+        <button class="period-btn" data-val="today" onclick="setRptPeriod('today',this)">오늘</button>
+        <button class="period-btn" data-val="week" onclick="setRptPeriod('week',this)">이번 주</button>
+        <button class="period-btn" data-val="month" onclick="setRptPeriod('month',this)">이번 달</button>
+        <button class="period-btn" data-val="custom" onclick="setRptPeriod('custom',this)">직접 입력</button>
+      </div>
+      <div id="rpt-custom-range" style="display:none;gap:8px;align-items:center;margin-bottom:8px">
+        <input type="date" class="inp" id="rpt-range-from" style="flex:1;padding:8px 10px;font-size:13px"/>
+        <span style="color:#94a3b8;font-size:12px">~</span>
+        <input type="date" class="inp" id="rpt-range-to" style="flex:1;padding:8px 10px;font-size:13px"/>
+      </div>
+      <div id="rpt-preview" style="font-size:12px;color:#16a34a;font-weight:700;margin-bottom:10px;min-height:16px"></div>
+      <button class="abtn xls" onclick="exportXls('filtered','rpt')">📝 점검기록 엑셀 저장</button>
+      <div class="fname" id="rpt-fname"></div>
+    </div>
+
+    <!-- 공가현황 엑셀 -->
+    <div class="card" style="border:2px solid #2563eb;background:linear-gradient(135deg,#eff6ff,#dbeafe);margin-bottom:14px">
+      <div class="ct" style="color:#2563eb">🏢 공가현황 엑셀</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:10px;line-height:1.8">전체 동·호 목록에서 공가 세대와 점검 완료 여부를 표시합니다.</div>
+      <div id="vac-xls-summary" style="background:#dbeafe;border-radius:8px;padding:8px 12px;font-size:12px;color:#1e40af;font-weight:700;margin-bottom:12px"></div>
+      <button class="abtn" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="exportVacancyXls()">🏢 공가현황 엑셀 저장</button>
+      <div class="fname" id="vac-xls-fname"></div>
+    </div>
+
+    <!-- 평형별 엑셀 (신규) -->
+    <div class="card" style="border:2px solid #f97316;background:linear-gradient(135deg,#fff7ed,#ffedd5);margin-bottom:14px">
+      <div class="ct" style="color:#f97316">📐 평형별 엑셀</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">
+        평형별로 시트를 분리해서 저장합니다.<br>
+        각 시트에 세대목록·점검현황·완료율이 포함됩니다.
+      </div>
+      <!-- 평형 선택 -->
+      <div style="margin-bottom:12px">
+        <label class="lbl">📐 평형 선택</label>
+        <div style="display:flex;gap:5px;flex-wrap:wrap" id="area-filter-btns">
+          <button class="period-btn on" data-val="all" onclick="setAreaFilter('all',this)">전체 평형</button>
+          <button class="period-btn" data-val="17.2" onclick="setAreaFilter('17.2',this)" style="background:#fde68a;border-color:#f59e0b">29A·13평</button>
+          <button class="period-btn" data-val="21.2" onclick="setAreaFilter('21.2',this)" style="background:#bfdbfe;border-color:#3b82f6">36A·16평</button>
+          <button class="period-btn" data-val="21.3" onclick="setAreaFilter('21.3',this)" style="background:#a5f3fc;border-color:#06b6d4">36B·16평</button>
+          <button class="period-btn" data-val="27.0" onclick="setAreaFilter('27.0',this)" style="background:#bbf7d0;border-color:#22c55e">46A/B·19평</button>
+          <button class="period-btn" data-val="29.7" onclick="setAreaFilter('29.7',this)" style="background:#fecaca;border-color:#ef4444">51A·21평</button>
+          <button class="period-btn" data-val="34.5" onclick="setAreaFilter('34.5',this)" style="background:#e9d5ff;border-color:#a855f7">59A·24평</button>
+        </div>
+      </div>
+      <div id="area-xls-summary" style="background:#ffedd5;border-radius:8px;padding:8px 12px;font-size:12px;color:#c2410c;font-weight:700;margin-bottom:12px"></div>
+      <button class="abtn" style="background:linear-gradient(135deg,#f97316,#ea580c)" onclick="exportAreaXls()">📐 평형별 엑셀 저장</button>
+      <div class="fname" id="area-xls-fname"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════ PDF 카테고리 ══════ -->
+  <div id="rpt-cat-pdf" style="display:none">
+
+    <!-- 점검 PDF -->
+    <div class="card" style="border:2px solid #dc2626;background:linear-gradient(135deg,#fff5f5,#fee2e2);margin-bottom:14px">
+      <div class="ct" style="color:#dc2626">📄 점검 PDF 보고서</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">세대별 검침값·메모·사진이 포함된 상세 보고서입니다.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="pdf-period-btns">
+        <button class="period-btn on" data-val="all" onclick="setPdfPeriod('all',this)">전체</button>
+        <button class="period-btn" data-val="today" onclick="setPdfPeriod('today',this)">오늘</button>
+        <button class="period-btn" data-val="week" onclick="setPdfPeriod('week',this)">이번 주</button>
+        <button class="period-btn" data-val="month" onclick="setPdfPeriod('month',this)">이번 달</button>
+        <button class="period-btn" data-val="custom" onclick="setPdfPeriod('custom',this)">직접 입력</button>
+      </div>
+      <div id="pdf-custom-range" style="display:none;gap:8px;align-items:center;margin-bottom:8px">
+        <input type="date" class="inp" id="pdf-range-from" style="flex:1;padding:8px 10px;font-size:13px"/>
+        <span style="color:#94a3b8;font-size:12px">~</span>
+        <input type="date" class="inp" id="pdf-range-to" style="flex:1;padding:8px 10px;font-size:13px"/>
+      </div>
+      <!-- 사진 포함 여부 선택 -->
+      <div style="background:#fff;border:1.5px solid #fecaca;border-radius:10px;padding:10px 14px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#dc2626;margin-bottom:8px">📸 사진 포함 여부</div>
+        <div style="display:flex;gap:8px">
+          <button id="pdf-photo-yes" class="period-btn on" onclick="setPdfPhotoOpt(true,this)" style="flex:1;padding:8px;text-align:center">📸 사진 포함</button>
+          <button id="pdf-photo-no" class="period-btn" onclick="setPdfPhotoOpt(false,this)" style="flex:1;padding:8px;text-align:center">📄 사진 제외</button>
+        </div>
+        <div id="pdf-photo-desc" style="font-size:11px;color:#94a3b8;margin-top:6px">사진 포함 시 파일 크기가 커질 수 있습니다</div>
+      </div>
+      <div id="pdf-preview" style="font-size:12px;color:#dc2626;font-weight:700;margin-bottom:10px;min-height:16px"></div>
+      <button class="abtn pdf" id="btn-pdf-report" onclick="exportPdfReport()">📄 PDF 보고서 저장</button>
+    </div>
+
+    <!-- 동별 요약 PDF -->
+    <div class="card" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf5ff,#ede9fe);margin-bottom:14px">
+      <div class="ct" style="color:#7c3aed">🏗️ 동별 요약 보고서</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">동별 점검 완료·미완료·진행률을 한 장에 요약합니다.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px" id="dong-rpt-btns">
+        <button class="period-btn on" data-val="all" onclick="setDongRpt('all',this)">전체 동</button>
+        <button class="period-btn" data-val="sel" onclick="setDongRpt('sel',this)">동 선택</button>
+      </div>
+      <div id="dong-sel-wrap" style="display:none;margin-bottom:12px">
+        <select class="inp" id="dong-rpt-sel" multiple style="height:110px;font-size:13px"></select>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px">여러 동 선택 가능 (길게 누르기)</div>
+      </div>
+      <button class="abtn" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)" onclick="exportDongSummaryPdf()">🏗️ 동별 요약 저장</button>
+    </div>
+
+    <!-- 빈 점검표 인쇄 -->
+    <div class="card" style="border:2px solid #0891b2;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);margin-bottom:14px">
+      <div class="ct" style="color:#0891b2">📋 빈 점검표 인쇄</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">직원 배부용 빈 양식입니다. QR코드를 포함하면 스캔 시 앱으로 바로 연결됩니다.</div>
+      <!-- 인쇄 범위 선택 -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#0891b2;margin-bottom:6px">🏢 인쇄 범위</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px" id="blank-dong-btns">
+          <button class="period-btn on" onclick="setBlankDong('전체',this)">전체</button>
+          <button class="period-btn" onclick="setBlankDong('701동',this)">701</button>
+          <button class="period-btn" onclick="setBlankDong('702동',this)">702</button>
+          <button class="period-btn" onclick="setBlankDong('703동',this)">703</button>
+          <button class="period-btn" onclick="setBlankDong('704동',this)">704</button>
+          <button class="period-btn" onclick="setBlankDong('705동',this)">705</button>
+          <button class="period-btn" onclick="setBlankDong('706동',this)">706</button>
+          <button class="period-btn" onclick="setBlankDong('707동',this)">707</button>
+          <button class="period-btn" onclick="setBlankDong('708동',this)">708</button>
+          <button class="period-btn" onclick="setBlankDong('709동',this)">709</button>
+          <button class="period-btn" onclick="setBlankDong('710동',this)">710</button>
+          <button class="period-btn" onclick="setBlankDong('711동',this)">711</button>
+          <button class="period-btn" onclick="setBlankDong('712동',this)">712</button>
+          <button class="period-btn" onclick="setBlankDong('713동',this)">713</button>
+          <button class="period-btn" onclick="setBlankDong('714동',this)">714</button>
+          <button class="period-btn" onclick="setBlankDong('특정세대',this)" style="background:#fef9c3;border-color:#f59e0b;color:#854d0e">📌 특정세대</button>
+        </div>
+        <!-- 특정 세대 선택 패널 -->
+        <div id="blank-unit-panel" style="display:none;background:#fff;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-top:6px">
+          <div style="font-size:11px;font-weight:700;color:#854d0e;margin-bottom:8px">📌 특정 세대 선택</div>
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <select id="blank-unit-dong" class="inp" style="flex:1" onchange="updateBlankUnitHo()">
+              <option value="">동 선택</option>
+            </select>
+            <select id="blank-unit-ho" class="inp" style="flex:1">
+              <option value="">호수 선택</option>
+            </select>
+          </div>
+          <button onclick="addBlankUnit()" style="width:100%;padding:8px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">➕ 추가</button>
+          <div id="blank-unit-list" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px"></div>
+        </div>
+      </div>
+      <!-- QR코드 포함 여부 -->
+      <div style="background:#fff;border:1.5px solid #bae6fd;border-radius:10px;padding:10px 14px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:#0891b2;margin-bottom:8px">📱 QR코드 포함 여부</div>
+        <div style="display:flex;gap:8px">
+          <button id="blank-qr-yes" class="period-btn on" onclick="setBlankQr(true,this)" style="flex:1">📱 QR코드 포함</button>
+          <button id="blank-qr-no" class="period-btn" onclick="setBlankQr(false,this)" style="flex:1">📄 QR코드 제외</button>
+        </div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:6px">QR코드 스캔 시 해당 세대 앱으로 바로 연결</div>
+      </div>
+      <button class="abtn" id="btn-blank-pdf" style="background:linear-gradient(135deg,#0891b2,#0e7490)" onclick="exportBlankForm()">📋 빈 점검표 PDF 저장</button>
+    </div>
+
+  </div>
+
+  <!-- ══════ 통계 카테고리 ══════ -->
+  <div id="rpt-cat-stat" style="display:none">
+
+    <!-- 월간 통계 -->
+    <div class="card" style="border:2px solid #f97316;background:linear-gradient(135deg,#fff7ed,#ffedd5);margin-bottom:14px">
+      <div class="ct" style="color:#f97316">📅 월간 점검 통계</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">날짜별·동별 점검 건수를 시각화합니다.</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <select class="inp" id="stat-year" style="flex:1"></select>
+        <select class="inp" id="stat-month" style="flex:1">
+          <option value="0">전체 월</option>
+          <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+          <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+          <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+          <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
+        </select>
+        <button class="abtn" style="background:#f97316;flex:1;padding:10px;font-size:13px" onclick="renderMonthlyStat()">📊 조회</button>
+      </div>
+      <div id="monthly-stat-result"></div>
+    </div>
+
+    <!-- 점검자별 통계 (신규) -->
+    <div class="card" style="border:2px solid #0891b2;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);margin-bottom:14px">
+      <div class="ct" style="color:#0891b2">👤 점검자별 통계</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">점검자별 담당 세대 수와 현황을 확인합니다.</div>
+      <button class="abtn" style="background:#0891b2" onclick="renderInspectorStat()">👤 점검자별 현황 조회</button>
+      <div id="inspector-stat-result" style="margin-top:12px"></div>
+    </div>
+
+    <!-- 상태별 통계 (신규) -->
+    <div class="card" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf5ff,#ede9fe);margin-bottom:14px">
+      <div class="ct" style="color:#7c3aed">🚦 상태별 현황</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">입주가능·수리중·하자있음·입주청소전 세대 현황을 확인합니다.</div>
+      <button class="abtn" style="background:#7c3aed" onclick="renderStatusStat()">🚦 상태별 현황 조회</button>
+      <div id="status-stat-result" style="margin-top:12px"></div>
+    </div>
+
+  </div>
+
+  <!-- ══════ 이력 카테고리 ══════ -->
+  <div id="rpt-cat-history" style="display:none">
+
+    <!-- 세대별 이력 -->
+    <div class="card" style="border:2px solid #0891b2;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);margin-bottom:14px">
+      <div class="ct" style="color:#0891b2">📋 세대별 점검 이력</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">동·호수 선택하면 바로 이력이 표시됩니다.</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <select class="inp" id="hist-dong" style="flex:1" onchange="renderHistHo();renderUnitHistory()"><option value="">동 선택</option></select>
+        <select class="inp" id="hist-ho" style="flex:1" onchange="renderUnitHistory()"><option value="">호수 선택</option></select>
+      </div>
+      <div id="unit-hist-result"></div>
+    </div>
+
+    <!-- 이상세대 목록 (신규) -->
+    <div class="card" style="border:2px solid #dc2626;background:linear-gradient(135deg,#fff5f5,#fee2e2);margin-bottom:14px">
+      <div class="ct" style="color:#dc2626">⚠️ 상태별 세대 목록</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">수리중·하자있음·입주청소전 세대 목록입니다.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="issue-filter-btns">
+        <button class="period-btn on" data-val="all" onclick="setIssueFilter('all',this)">전체</button>
+        <button class="period-btn" data-val="수리중" onclick="setIssueFilter('수리중',this)" style="background:#fff7ed;border-color:#fed7aa;color:#c2410c">🔧 수리중</button>
+        <button class="period-btn" data-val="하자있음" onclick="setIssueFilter('하자있음',this)" style="background:#fee2e2;border-color:#fecaca;color:#dc2626">🚨 하자있음</button>
+        <button class="period-btn" data-val="입주청소전" onclick="setIssueFilter('입주청소전',this)" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">🧹 입주청소전</button>
+      </div>
+      <button class="abtn" style="background:#dc2626" onclick="renderIssueList()">⚠️ 이상세대 조회</button>
+      <div id="issue-list-result" style="margin-top:12px"></div>
+    </div>
+
+    <!-- 메모 검색 (신규) -->
+    <div class="card" style="border:2px solid #64748b;background:linear-gradient(135deg,#f8fafc,#f1f5f9);margin-bottom:14px">
+      <div class="ct" style="color:#64748b">🔍 메모 검색</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:12px;line-height:1.8">메모 내용으로 점검 기록을 검색합니다.</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="text" class="inp" id="memo-search-input" placeholder="검색어 입력..." style="flex:1;padding:10px;font-size:13px"/>
+        <button class="abtn" style="background:#64748b;flex:none;padding:10px 16px" onclick="renderMemoSearch()">🔍 검색</button>
+      </div>
+      <div id="memo-search-result"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 내보내기 -->
+<div class="pad" id="pane-export" style="display:none">
+
+  <!-- 오늘 작업 마감 -->
+  <div class="card" id="card-finish" style="border:2px solid #2563eb;background:linear-gradient(135deg,#eff6ff,#dbeafe)">
+    <div class="ct" style="color:#2563eb">🏁 오늘 작업 마감</div>
+    <div id="finish-info" style="font-size:12px;color:#475569;margin-bottom:14px;line-height:1.9"></div>
+    <button class="abtn" id="btn-finish" onclick="doFinish()" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);font-size:15px;padding:14px">
+      💾 백업 저장
+    </button>
+    <div class="fname" id="finish-fname" style="margin-top:8px"></div>
+  </div>
+
+
+  <!-- 백업 -->
+  <div class="card">
+    <div class="ct">💾 데이터 백업 / 복원</div>
+    <div id="last-backup-info" style="background:#f0f9ff;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#0891b2;font-weight:700;line-height:1.8"></div>
+    <p style="font-size:12px;color:#475569;margin-bottom:14px;line-height:1.7">점검 기록 + 사진 전체를 JSON 파일로 백업합니다.<br/>백업 파일 하나로 다른 기기에서 완전 복원됩니다.</p>
+
+    <!-- Google Drive 백업 -->
+    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #16a34a;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <img src="https://www.google.com/favicon.ico" style="width:18px;height:18px" onerror="this.style.display='none'"/>
+        <span style="font-weight:800;font-size:14px;color:#15803d">☁️ Google Drive 백업</span>
+        <span style="background:#bbf7d0;color:#15803d;border-radius:20px;padding:1px 8px;font-size:10px;font-weight:700">추천</span>
+      </div>
+      <div style="font-size:11px;color:#475569;margin-bottom:10px;line-height:1.7">
+        사진 포함 전체 백업을 Drive에 자동 저장합니다.<br>
+        <span style="color:#15803d;font-weight:700">📁 저장 위치: 내 드라이브 / LH공가점검_백업 폴더</span>
+      </div>
+      <!-- 로그인 상태 표시 -->
+      <div id="gdrive-status" style="background:#dcfce7;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;color:#15803d;margin-bottom:10px;display:none"></div>
+      <!-- 버튼들 -->
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button id="btn-gdrive-login" class="abtn" style="background:linear-gradient(135deg,#4285f4,#1a73e8);display:flex;align-items:center;justify-content:center;gap:8px" onclick="gdriveLogin()">
+          <span style="background:#fff;border-radius:3px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:13px">G</span>
+          <span>Google 계정으로 로그인</span>
+        </button>
+        <button id="btn-gdrive-save" class="abtn" style="background:linear-gradient(135deg,#16a34a,#15803d);display:none" onclick="gdriveBackup()">
+          ☁️ Drive에 백업 저장
+        </button>
+        <button id="btn-gdrive-load" class="abtn gray" style="display:none" onclick="gdriveRestore()">
+          ☁️ Drive에서 백업 불러오기
+        </button>
+        <button id="btn-gdrive-logout" class="abtn" style="background:#64748b;font-size:12px;display:none;padding:8px" onclick="gdriveLogout()">
+          🔓 로그아웃
+        </button>
+      </div>
+      <div class="fname" id="gdrive-fname"></div>
+    </div>
+
+    <!-- 로컬 백업 -->
+    <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-weight:800;font-size:13px;color:#475569;margin-bottom:8px">📱 로컬 백업 (기기 저장)</div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:10px">인터넷 없이도 사용 가능 · 기존 방식</div>
+      <button class="abtn bak" id="btn-bak" onclick="exportBackup()" style="margin-bottom:8px">💾 백업 파일 저장</button>
+      <button class="abtn gray" onclick="document.getElementById('restore-in').click()">📂 백업 파일 불러오기</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <button class="abtn" style="background:#475569;font-size:12px;padding:10px" onclick="changeLockPw()">🔑 비밀번호 변경</button>
+      <button class="abtn" style="background:#dc2626;font-size:12px;padding:10px" onclick="lockNow()">🔒 화면 잠금</button>
+    </div>
+      <div class="fname" id="bak-fname"></div>
+    </div>
+  </div>
+
+  <!-- PC 이전 가이드 -->
+  <div class="card" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#faf5ff,#ede9fe)">
+    <div class="ct" style="color:#7c3aed">💻 윈도우 PC에서 사용하기</div>
+    <div style="font-size:12px;color:#475569;margin-bottom:14px;line-height:1.8">
+      스마트폰에서 작업한 데이터를 PC에서 이어서 사용하는 방법입니다.
+    </div>
+
+    <!-- STEP 1 -->
+    <div style="background:#fff;border:1.5px solid #e9d5ff;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="background:#7c3aed;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">1</span>
+        <span style="font-weight:800;font-size:13px;color:#1e293b">📱 스마트폰에서 백업 저장</span>
+      </div>
+      <div style="font-size:12px;color:#475569;line-height:1.8;padding-left:30px">
+        위 <b>💾 백업 파일 저장</b> 버튼을 눌러 JSON 파일을 저장합니다.<br>
+        파일명: <span style="background:#f1f5f9;border-radius:4px;padding:1px 6px;font-family:monospace;color:#7c3aed">LH공가점검_백업_날짜.json</span>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div style="background:#fff;border:1.5px solid #e9d5ff;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="background:#7c3aed;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">2</span>
+        <span style="font-weight:800;font-size:13px;color:#1e293b">📤 PC로 파일 전송 (택 1)</span>
+      </div>
+      <div style="font-size:12px;color:#475569;line-height:1.9;padding-left:30px">
+        <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
+          <span style="background:#fde68a;border-radius:4px;padding:1px 6px;font-weight:700;font-size:11px;flex-shrink:0">추천</span>
+          <span><b>카카오톡 나에게 보내기</b> — 파일 첨부 → 내 채팅 → PC 카카오톡에서 다운로드</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
+          <span style="background:#bfdbfe;border-radius:4px;padding:1px 6px;font-weight:700;font-size:11px;flex-shrink:0">간편</span>
+          <span><b>이메일 첨부</b> — 본인 이메일로 파일 첨부 발송</span>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:6px">
+          <span style="background:#bbf7d0;border-radius:4px;padding:1px 6px;font-weight:700;font-size:11px;flex-shrink:0">USB</span>
+          <span><b>USB 케이블</b> — 스마트폰 연결 후 파일 복사</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div style="background:#fff;border:1.5px solid #e9d5ff;border-radius:10px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="background:#7c3aed;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">3</span>
+        <span style="font-weight:800;font-size:13px;color:#1e293b">💻 PC에서 앱 파일 열기</span>
+      </div>
+      <div style="font-size:12px;color:#475569;line-height:1.8;padding-left:30px">
+        PC에서 <span style="background:#f1f5f9;border-radius:4px;padding:1px 6px;font-family:monospace;color:#7c3aed">index.html</span> 파일을 더블클릭 하거나,<br>
+        Chrome/Edge 주소창에 파일 경로를 입력해 실행합니다.<br>
+        <span style="color:#dc2626;font-weight:700">⚠️ Internet Explorer는 지원하지 않습니다.</span>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div style="background:#fff;border:1.5px solid #e9d5ff;border-radius:10px;padding:12px 14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="background:#7c3aed;color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0">4</span>
+        <span style="font-weight:800;font-size:13px;color:#1e293b">📂 백업 파일 불러오기</span>
+      </div>
+      <div style="font-size:12px;color:#475569;line-height:1.8;padding-left:30px">
+        PC에서 앱이 열리면 <b>내보내기 탭</b> → <b>📂 백업 파일 불러오기</b>를 눌러 JSON 파일을 선택합니다.<br>
+        <span style="color:#16a34a;font-weight:700">✅ 스마트폰의 모든 점검 기록이 PC에 동기화됩니다!</span>
+      </div>
+    </div>
+
+    <!-- PC 작업 후 스마트폰 복귀 안내 -->
+    <div style="background:#ede9fe;border-radius:10px;padding:10px 14px;margin-top:12px">
+      <div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:4px">🔄 PC 작업 후 스마트폰으로 돌아올 때</div>
+      <div style="font-size:11px;color:#475569;line-height:1.8">
+        PC에서 작업 완료 → 백업 저장 → 카카오톡/메일로 전송<br>
+        스마트폰에서 백업 불러오기 → 최신 데이터로 복원 완료
+      </div>
+    </div>
+  </div>
+
+  <!-- 앱 정보 -->
+  <div class="card" style="background:#f8fafc">
+    <div class="ct">ℹ️ 앱 정보</div>
+    <div style="font-size:12px;color:#475569;line-height:2.1">
+      <div>📱 자동저장: <b>켜짐</b> (앱을 닫아도 유지)</div>
+      <div>🏢 단지: 양주옥정 A-7블록 (701~714동)</div>
+      <div id="info-cnt"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ───── 상수 ───── */
+const BLDS={
+  '701동':{floors:13,lines:[1,2,3,4],area:29.7},
+  '702동':{floors:20,lines:[1,2,3,4,5,6,7],area:27.0},
+  '703동':{floors:20,lines:[1,2,3,4,5,6,7],area:27.0},
+  '704동':{floors:15,lines:[1,2,3,4,5,6],area:34.5},
+  '705동':{floors:11,lines:[1,2,3,4,5,6],area:27.0},
+  '706동':{floors:11,lines:[1,2,3,4],area:29.7},
+  '707동':{floors:14,lines:[1,2,3,4,5,6],skip:[[1,3],[1,4]],area:29.7},
+  '708동':{floors:13,lines:[1,2,3,4,5,6,7,8,9,10],partialFrom:11,partialLines:[9,10],area:21.2},
+  '709동':{floors:13,lines:[1,2,3,4,5,6,7,8],partialFrom:11,partialLines:[5,6,7,8],area:34.5},
+  '710동':{floors:20,lines:[1,2,3,4,5,6,7],area:27.0},
+  '711동':{floors:15,lines:[1,2,3,4],area:34.5},
+  '712동':{floors:12,lines:[1,2,3,4],area:29.7},
+  '713동':{floors:13,lines:[1,2,3,4],area:34.5},
+  '714동':{floors:20,lines:[1,2,3,4,5,6,7],area:27.0},
+};
+// 동 선택 시 평형 자동 설정
+function onNewVacDongChange(){
+  const dong = document.getElementById('new-vac-dong').value;
+  const areaEl = document.getElementById('new-vac-area');
+  if(dong && BLDS[dong] && BLDS[dong].area){
+    areaEl.value = String(BLDS[dong].area);
+  }
+  // 호수 목록 갱신
+  renderNewVacHo();
+}
+const DONGS=Object.keys(BLDS);
+const RESIDENT_UNITS = new Set(["701동 602호", "701동 702호", "701동 704호", "701동 804호", "701동 1004호", "701동 1101호", "701동 1104호", "702동 201호", "702동 205호", "702동 402호", "702동 504호", "702동 702호", "702동 906호", "702동 1407호", "702동 1507호", "702동 1607호", "702동 1802호", "702동 1806호", "702동 1807호", "702동 1907호", "702동 2004호", "702동 2005호", "702동 2007호", "703동 103호", "703동 204호", "703동 301호", "703동 302호", "703동 303호", "703동 307호", "703동 907호", "703동 1003호", "703동 1004호", "703동 1101호", "703동 1102호", "703동 1104호", "703동 1106호", "703동 1305호", "703동 1405호", "703동 1502호", "703동 1702호", "703동 2001호", "703동 2004호", "703동 2006호", "704동 101호", "704동 102호", "704동 301호", "704동 302호", "704동 405호", "704동 503호", "704동 603호", "704동 903호", "704동 1304호", "704동 1401호", "704동 1406호", "704동 1504호", "705동 101호", "705동 104호", "705동 204호", "705동 206호", "705동 305호", "705동 404호", "705동 405호", "705동 506호", "705동 602호", "705동 701호", "705동 802호", "705동 805호", "705동 904호", "705동 1005호", "705동 1006호", "706동 104호", "706동 202호", "706동 203호", "706동 302호", "706동 401호", "706동 503호", "706동 803호", "706동 901호", "706동 902호", "706동 1103호", "707동 106호", "707동 302호", "707동 305호", "707동 306호", "707동 406호", "707동 501호", "707동 505호", "707동 603호", "707동 605호", "707동 606호", "707동 805호", "707동 905호", "707동 906호", "707동 1001호", "707동 1002호", "707동 1003호", "707동 1005호", "707동 1203호", "707동 1206호", "707동 1401호", "708동 109호", "708동 303호", "708동 310호", "708동 502호", "708동 503호", "708동 601호", "708동 609호", "708동 801호", "708동 810호", "708동 1001호", "708동 1009호", "708동 1307호", "708동 1308호", "709동 106호", "709동 302호", "709동 402호", "709동 406호", "709동 408호", "709동 806호", "709동 808호", "709동 1001호", "710동 101호", "710동 201호", "710동 205호", "710동 207호", "710동 303호", "710동 306호", "710동 601호", "710동 605호", "710동 701호", "710동 704호", "710동 706호", "710동 1002호", "710동 1005호", "710동 1102호", "710동 1105호", "710동 1106호", "710동 1407호", "710동 1606호", "710동 1806호", "710동 2001호", "710동 2006호", "711동 102호", "711동 301호", "711동 703호", "711동 803호", "711동 903호", "711동 1004호", "711동 1101호", "711동 1202호", "711동 1302호", "711동 1501호", "712동 101호", "712동 102호", "712동 104호", "712동 202호", "712동 301호", "712동 402호", "712동 404호", "712동 502호", "712동 504호", "712동 803호", "712동 902호", "712동 903호", "713동 302호", "713동 602호", "713동 1001호", "713동 1102호", "713동 1103호", "714동 201호", "714동 206호", "714동 303호", "714동 304호", "714동 407호", "714동 504호", "714동 603호", "714동 706호", "714동 903호", "714동 1202호", "714동 1504호", "714동 1604호", "714동 1607호", "714동 1702호", "714동 1907호"]);
+
+const UNIT_AREA = {"701동 602호": 29.7, "701동 702호": 29.7, "701동 704호": 29.7, "701동 804호": 29.7, "701동 1004호": 29.7, "701동 1101호": 29.7, "701동 1104호": 29.7, "702동 201호": 27.0, "702동 205호": 21.3, "702동 402호": 21.3, "702동 504호": 27.0, "702동 702호": 21.3, "702동 906호": 21.3, "702동 1407호": 27.0, "702동 1507호": 27.0, "702동 1607호": 27.0, "702동 1802호": 21.3, "702동 1806호": 21.3, "702동 1807호": 27.0, "702동 1907호": 27.0, "702동 2004호": 27.0, "702동 2005호": 21.3, "702동 2007호": 27.0, "703동 103호": 21.3, "703동 204호": 27.0, "703동 301호": 27.0, "703동 302호": 21.3, "703동 303호": 21.3, "703동 307호": 27.0, "703동 907호": 27.0, "703동 1003호": 21.3, "703동 1004호": 27.0, "703동 1101호": 27.0, "703동 1102호": 21.3, "703동 1104호": 27.0, "703동 1106호": 21.3, "703동 1305호": 21.3, "703동 1405호": 21.3, "703동 1502호": 21.3, "703동 1702호": 21.3, "703동 2001호": 27.0, "703동 2004호": 27.0, "703동 2006호": 21.3, "704동 101호": 29.7, "704동 102호": 29.7, "704동 301호": 29.7, "704동 302호": 29.7, "704동 405호": 27.0, "704동 503호": 27.0, "704동 603호": 27.0, "704동 903호": 27.0, "704동 1304호": 27.0, "704동 1401호": 29.7, "704동 1406호": 27.0, "704동 1504호": 27.0, "705동 101호": 27.0, "705동 104호": 27.0, "705동 204호": 27.0, "705동 206호": 27.0, "705동 305호": 27.0, "705동 404호": 27.0, "705동 405호": 27.0, "705동 506호": 27.0, "705동 602호": 27.0, "705동 701호": 27.0, "705동 802호": 27.0, "705동 805호": 27.0, "705동 904호": 27.0, "705동 1005호": 27.0, "705동 1006호": 27.0, "706동 104호": 29.7, "706동 202호": 29.7, "706동 203호": 29.7, "706동 302호": 29.7, "706동 401호": 29.7, "706동 503호": 29.7, "706동 803호": 29.7, "706동 901호": 29.7, "706동 902호": 29.7, "706동 1103호": 29.7, "707동 106호": 27.0, "707동 302호": 29.7, "707동 305호": 27.0, "707동 306호": 27.0, "707동 406호": 27.0, "707동 501호": 29.7, "707동 505호": 27.0, "707동 603호": 27.0, "707동 605호": 27.0, "707동 606호": 27.0, "707동 805호": 27.0, "707동 905호": 27.0, "707동 906호": 27.0, "707동 1001호": 29.7, "707동 1002호": 29.7, "707동 1003호": 27.0, "707동 1005호": 27.0, "707동 1203호": 27.0, "707동 1206호": 27.0, "707동 1401호": 29.7, "708동 109호": 21.3, "708동 303호": 21.3, "708동 310호": 21.2, "708동 502호": 21.3, "708동 503호": 21.3, "708동 601호": 21.2, "708동 609호": 21.3, "708동 801호": 21.2, "708동 810호": 21.2, "708동 1001호": 21.2, "708동 1009호": 21.3, "708동 1307호": 21.3, "708동 1308호": 21.3, "709동 106호": 17.2, "709동 302호": 17.2, "709동 402호": 17.2, "709동 406호": 17.2, "709동 408호": 21.2, "709동 806호": 17.2, "709동 808호": 21.2, "709동 1001호": 17.2, "710동 101호": 27.0, "710동 201호": 27.0, "710동 205호": 21.3, "710동 207호": 27.0, "710동 303호": 21.3, "710동 306호": 21.3, "710동 601호": 27.0, "710동 605호": 21.3, "710동 701호": 27.0, "710동 704호": 27.0, "710동 706호": 21.3, "710동 1002호": 21.3, "710동 1005호": 21.3, "710동 1102호": 21.3, "710동 1105호": 21.3, "710동 1106호": 21.3, "710동 1407호": 27.0, "710동 1606호": 21.3, "710동 1806호": 21.3, "710동 2001호": 27.0, "710동 2006호": 21.3, "711동 102호": 34.5, "711동 301호": 34.5, "711동 703호": 34.5, "711동 803호": 34.5, "711동 903호": 34.5, "711동 1004호": 34.5, "711동 1101호": 34.5, "711동 1202호": 34.5, "711동 1302호": 34.5, "711동 1501호": 34.5, "712동 101호": 29.7, "712동 102호": 29.7, "712동 104호": 29.7, "712동 202호": 29.7, "712동 301호": 29.7, "712동 402호": 29.7, "712동 404호": 29.7, "712동 502호": 29.7, "712동 504호": 29.7, "712동 803호": 29.7, "712동 902호": 29.7, "712동 903호": 29.7, "713동 302호": 34.5, "713동 602호": 34.5, "713동 1001호": 34.5, "713동 1102호": 34.5, "713동 1103호": 34.5, "714동 201호": 27.0, "714동 206호": 21.3, "714동 303호": 21.3, "714동 304호": 27.0, "714동 407호": 27.0, "714동 504호": 27.0, "714동 603호": 21.3, "714동 706호": 21.3, "714동 903호": 21.3, "714동 1202호": 21.3, "714동 1504호": 27.0, "714동 1604호": 27.0, "714동 1607호": 27.0, "714동 1702호": 21.3, "714동 1907호": 27.0};
+const TYPES=['1차','2차','3차','4차','5차','6차','7차','8차','9차','10차','11차','12차','13차','14차','15차','16차','17차','18차','19차','20차'];
+// 평형별 배경색 (분양면적㎡ → 실제 평형 표기)
+const AREA_COLOR={
+  17.2:{bg:'#fde68a',border:'#f59e0b',label:'29A (13평)'},
+  21.2:{bg:'#bfdbfe',border:'#3b82f6',label:'36A (16평)'},
+  21.3:{bg:'#a5f3fc',border:'#06b6d4',label:'36B (16평)'},
+  27.0:{bg:'#bbf7d0',border:'#22c55e',label:'46A/46B (19평)'},
+  29.7:{bg:'#fecaca',border:'#ef4444',label:'51A (21평)'},
+  34.5:{bg:'#e9d5ff',border:'#a855f7',label:'59A (24평)'},
+};
+const CHKDEF={
+  '현관및거실':['현관문(도어록/클로저)','전등(점등/깜빡임)','인터폰(관리실/현관)','바닥·벽지(찍힘/오염/들뜸)'],
+  '주방':['싱크대수전(수압/누수/배수)','주방후드(소음/흡입력)','상하부장(수평/경첩소음)'],
+  '욕실및베란다':['양변기(물내림/균열)','세면대·욕조(배수/실리콘)','타일(깨짐/들뜸)','베란다(배수구오물)','봉수확인(냄새/넘침)','변기물탱크(수압/누수)'],
+  '기타':['창호(개폐/잠금장치)','난방공급확인(보일러)'],
+};
+// 점검항목 설명 (빈양식 인쇄용)
+const CHKDESC={
+  '현관문(도어록/클로저)':'도어록 작동, 문닫힘 속도(도어클로저), 호수판 부착',
+  '전등(점등/깜빡임)':'거실·통로 점등 여부, 깜빡임 확인',
+  '인터폰(관리실/현관)':'관리실 및 공동현관 호출·통화 정상 작동',
+  '바닥·벽지(찍힘/오염/들뜸)':'찍힘, 오염, 들뜸 현상 유무',
+  '싱크대수전(수압/누수/배수)':'냉·온수 수압, 누수 및 배수 원활 여부',
+  '주방후드(소음/흡입력)':'작동 소음 및 흡입력 확인',
+  '상하부장(수평/경첩소음)':'문짝 수평 및 경첩 소음 확인',
+  '양변기(물내림/균열)':'물내림 상태 및 하부 백시멘트 균열 여부',
+  '세면대·욕조(배수/실리콘)':'배수 속도 및 실리콘 마감 상태',
+  '타일(깨짐/들뜸)':'깨짐·들뜸(중공음) 현상 유무',
+  '베란다(배수구오물)':'배수구 오물 유무',
+  '창호(개폐/잠금장치)':'창문 개폐 원활, 잠금장치(크리센트) 작동',
+  '난방공급확인(보일러)':'가동 소음 및 난방 공급 확인',
+};
+const CHKSEC_ICON={'현관및거실':'🚪','주방':'🍳','욕실및베란다':'🚿','기타':'🔧'};
+
+const METERS=['전기','수도','온수','난방','가스'];
+const MUNITS={전기:'kWh',수도:'m³',온수:'m³',난방:'Gcal',가스:'m³'};
+const SC={'점검전':{bg:'#f1f5f9',fg:'#475569',bd:'#e2e8f0'},'입주가능':{bg:'#f0fdf4',fg:'#15803d',bd:'#86efac'},'수리중':{bg:'#fff7ed',fg:'#c2410c',bd:'#fed7aa'},'하자있음':{bg:'#fef2f2',fg:'#dc2626',bd:'#fecaca'},'입주청소전':{bg:'#eff6ff',fg:'#1d4ed8',bd:'#bfdbfe'}};
+const LS_KEY='lh_v3';
+
+/* ───── 상태 ───── */
+let records=[], sessIds=new Set(), vacMap={};
+let selDong=DONGS[0], selUnit='', savedRec=null;
+let fChecks={}, fPhotos=[], fMeter={};
+
+/* ───── 세대 목록 생성 ───── */
+const UNITS=(()=>{
+  const r={};
+  for(const d of DONGS){
+    const cfg=BLDS[d]; r[d]=[];
+    for(let f=1;f<=cfg.floors;f++){
+      const ls=(cfg.partialFrom&&f>=cfg.partialFrom)?cfg.partialLines:cfg.lines;
+      for(const l of ls){
+        if((cfg.skip||[]).some(s=>s[0]===f&&s[1]===l))continue;
+        r[d].push((f*100+l)+'호');
+      }
+    }
+  }
+  return r;
+})();
+
+/* ───── localStorage ───── */
+function saveLS(){try{localStorage.setItem(LS_KEY,JSON.stringify({records,vacMap}));}catch(e){}}
+function loadLS(){try{const d=localStorage.getItem(LS_KEY);if(!d)return;const p=JSON.parse(d);records=p.records||[];vacMap=p.vacMap||{};}catch(e){}}
+
+/* ───── 유틸 ───── */
+function vacDays(d){if(!d)return null;return Math.floor((Date.now()-new Date(d))/86400000);}
+function vacMonths(d){if(!d)return null;const s=new Date(d),n=new Date();let m=(n.getFullYear()-s.getFullYear())*12+(n.getMonth()-s.getMonth());if(n.getDate()<s.getDate())m--;return m<0?0:m;}
+function insertTime(){
+  const ta=document.getElementById('f-notes');
+  const now=new Date();
+  const str='['+now.getFullYear()+'.'+(now.getMonth()+1).toString().padStart(2,'0')+'.'+now.getDate().toString().padStart(2,'0')+' '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+'] ';
+  const s=ta.selectionStart,e=ta.selectionEnd;
+  ta.value=ta.value.slice(0,s)+str+ta.value.slice(e);
+  ta.selectionStart=ta.selectionEnd=s+str.length;
+  ta.focus();
+}
+function insertMemo(text){
+  const ta=document.getElementById('f-notes');
+  const cur=ta.value;
+  // 기존 내용이 있으면 줄바꿈 후 추가, 없으면 바로 입력
+  ta.value = cur ? cur+(cur.endsWith('\n')?'':'\n')+text+' ' : text+' ';
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  saveDraft(); // 단축어 입력도 임시저장
+}
+
+function renderVacInfo(){
+  const box=document.getElementById('vac-info-box');
+  if(!box)return;
+  const vac=document.getElementById('f-vac')?.value;
+  if(!vac){box.innerHTML='';return;}
+  const days=vacDays(vac), months=vacMonths(vac);
+  const daysStr=days!==null?`<span style="background:#fef9c3;color:#854d0e;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:700">공가 ${days}일 (${months}개월)</span>`:'';
+  box.innerHTML=`<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${daysStr}</div>`;
+}
+function calcSt(c){return '입주가능';}
+function nextType(u){
+  const r=records.filter(x=>x.unit===u);
+  if(!r.length) return RESIDENT_UNITS.has(u)?'1차':'1차';
+  const last=r[r.length-1].type;
+  const i=TYPES.indexOf(last);
+  return i<0||i>=TYPES.length-1?'20차':TYPES[i+1];
+}
+// 현재 차수 (점검 완료된 마지막 차수)
+function currentType(u){
+  const r=records.filter(x=>x.unit===u);
+  if(!r.length) return getAllVacancies().hasOwnProperty(u)?'1차':null;
+  return r[r.length-1].type;
+}
+function initChk(){const c={};for(const[s,ns]of Object.entries(CHKDEF)){c[s]={};ns.forEach(n=>c[s][n]='정상');}return c;}
+function initMtr(){const m={};METERS.forEach(n=>m[n]={p:'',c:''});return m;}
+function now8(){const n=new Date();return n.getFullYear()+pad2(n.getMonth()+1)+pad2(n.getDate())+'_'+pad2(n.getHours())+pad2(n.getMinutes())+pad2(n.getSeconds());}
+function pad2(n){return String(n).padStart(2,'0');}
+function fname(rec,ext){return rec.unit.replace(' ','')+'_'+rec.type+'_'+now8()+'.'+ext;}
+function toast(msg,ms=2500){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),ms);}
+function bsty(st){const c=SC[st]||SC['입주가능'];return`background:${c.bg};color:${c.fg};border:1px solid ${c.bd}`;}
+function updBadge(){
+  document.getElementById('hdr-badge').textContent=records.length+'건 · 세션 '+sessIds.size+'건';
+  const _vac = getAllVacancies();
+  const _vacEl = document.getElementById('hdr-vac-badge');
+  if(_vacEl) _vacEl.textContent = '공가 '+Object.keys(_vac).length+'세대';
+}
+
+/* ───── 탭 ───── */
+function switchTab(t){
+  ['form','dash','records','report','export'].forEach(x=>{
+    document.getElementById('pane-'+x).style.display=x===t?'block':'none';
+    document.getElementById('tab-'+x).classList.toggle('on',x===t);
+  });
+  if(t==='records')renderRecs();
+  if(t==='export'){renderExportSummary();renderLastBackupInfo();document.getElementById('info-cnt').textContent='📋 총 기록: '+records.length+'건';}
+  if(t==='report'){renderPdfPreview();renderRptPreview();initReportExtras();renderVacXlsSummary();}
+  if(t==='dash'){renderDash();}
+}
+
+/* ───── 대시보드 ───── */
+// 추가 공가 목록 (localStorage에 저장)
+const EXTRA_VAC_KEY = 'extra_vacancies';
+function loadExtraVac(){ try{ return JSON.parse(localStorage.getItem(EXTRA_VAC_KEY)||'{}'); }catch{return {};} }
+function saveExtraVac(obj){ localStorage.setItem(EXTRA_VAC_KEY, JSON.stringify(obj)); }
+
+function getAllVacancies(){
+  const base = {...UNIT_AREA};
+  const extra = loadExtraVac();
+  return {...base, ...extra};
+}
+
+function renderDash(){
+  const allVac = getAllVacancies();
+  const vacList = Object.keys(allVac);
+  const total = vacList.length;
+  const done = vacList.filter(u => records.some(r=>r.unit===u)).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  document.getElementById('dash-pct').textContent = pct+'%';
+  document.getElementById('dash-cnt').textContent = done+' / '+total+' 세대 완료';
+  document.getElementById('dash-bar').style.width = pct+'%';
+
+  // 미점검 세대
+  const undone = vacList.filter(u => !records.some(r=>r.unit===u));
+  document.getElementById('dash-untouched').textContent = `미점검 ${undone.length}세대 남음`;
+  const ul = document.getElementById('dash-unlist');
+  // 동별로 그룹화해서 표시
+  const undoneByDong = {};
+  undone.forEach(u=>{
+    const d=u.split(' ')[0];
+    if(!undoneByDong[d]) undoneByDong[d]=[];
+    undoneByDong[d].push(u);
+  });
+  ul.innerHTML = Object.entries(undoneByDong).map(([dong, units])=>{
+    const chips = units.map(u=>{
+      const area = allVac[u];
+      const ac = AREA_COLOR[area];
+      const bg = ac?ac.bg:'#f1f5f9';
+      const bd2 = ac?ac.border:'#cbd5e1';
+      const ho = u.split(' ')[1];
+      return `<button onclick="jumpToUnit('${u}')" style="background:${bg};border:1.5px solid ${bd2};border-radius:7px;padding:3px 7px;font-size:11px;font-weight:700;color:#1e293b;cursor:pointer">${ho}</button>`;
+    }).join('');
+    return `<div style="margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:4px">${dong} (${units.length}세대)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${chips}</div>
+    </div>`;
+  }).join('');
+
+  // 동별 진행률
+  const dongEl = document.getElementById('dash-dong-list');
+  dongEl.innerHTML = DONGS.map(dong=>{
+    const dVac = vacList.filter(u=>u.startsWith(dong));
+    if(!dVac.length) return '';
+    const dDone = dVac.filter(u=>records.some(r=>r.unit===u)).length;
+    const dPct = Math.round(dDone/dVac.length*100);
+    const color = dPct===100?'#16a34a':dPct>50?'#2563eb':'#f97316';
+    // 해당 동 세대 칩 버튼
+    const chips = dVac.map(u=>{
+      const isDone = records.some(r=>r.unit===u);
+      const ac = AREA_COLOR[allVac[u]];
+      const bg = isDone ? (ac?ac.bg:'#f0fdf4') : '#fff';
+      const bd = isDone ? (ac?ac.border:'#86efac') : '#e2e8f0';
+      const ho = u.split(' ')[1];
+      const dot = isDone ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#16a34a;margin-right:3px;vertical-align:middle"></span>` : '';
+      return `<button onclick="jumpToUnit('${u}')" style="background:${bg};border:1.5px solid ${bd};border-radius:7px;padding:3px 7px;font-size:11px;font-weight:700;color:#1e293b;cursor:pointer">${dot}${ho}</button>`;
+    }).join('');
+    const panelId = 'dong-panel-'+dong.replace('동','');
+    return `<div style="margin-bottom:6px">
+      <div onclick="(()=>{const p=document.getElementById('${panelId}');p.style.display=p.style.display==='none'?'flex':'none'})()"
+        style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:3px;cursor:pointer;padding:4px 2px;border-radius:6px" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+        <span>${dong} <span style="font-size:10px;color:#94a3b8">▼ 탭하면 세대 목록</span></span>
+        <span style="color:${color}">${dDone}/${dVac.length} (${dPct}%)</span>
+      </div>
+      <div style="background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden;margin-bottom:4px">
+        <div style="height:100%;background:${color};border-radius:99px;width:${dPct}%;transition:width 0.4s"></div>
+      </div>
+      <div id="${panelId}" style="display:none;flex-wrap:wrap;gap:4px;margin-bottom:4px">${chips}</div>
+    </div>`;
+  }).join('');
+
+  // 평형별 현황
+  const AREA_LABEL2 = {17.2:'29A (13평)',21.2:'36A (16평)',21.3:'36B (16평)',27.0:'46A/46B (19평)',29.7:'51A (21평)',34.5:'59A (24평)'};
+  const areaEl = document.getElementById('dash-area-list');
+  const areaSummary = {};
+  vacList.forEach(u=>{
+    const a = allVac[u];
+    if(!areaSummary[a]) areaSummary[a]={total:0,done:0};
+    areaSummary[a].total++;
+    if(records.some(r=>r.unit===u)) areaSummary[a].done++;
+  });
+  areaEl.innerHTML = Object.entries(areaSummary).sort((a,b)=>a[0]-b[0]).map(([area,s])=>{
+    const ac = AREA_COLOR[area];
+    const pct2 = Math.round(s.done/s.total*100);
+    return `<div onclick="showAreaDrill(${area})" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px;border-radius:8px;transition:background 0.15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <span style="background:${ac?ac.bg:'#f1f5f9'};border:1.5px solid ${ac?ac.border:'#cbd5e1'};border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;min-width:110px;text-align:center">${AREA_LABEL2[area]||area+'평'}</span>
+      <div style="flex:1;background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden">
+        <div style="height:100%;background:${ac?ac.border:'#64748b'};border-radius:99px;width:${pct2}%"></div>
+      </div>
+      <span style="font-size:11px;font-weight:700;min-width:55px;text-align:right;color:#475569">${s.done}/${s.total} (${pct2}%)</span>
+      <span style="font-size:11px;color:#94a3b8">▶</span>
+    </div>`;
+  }).join('');
+
+  // 추가된 공가 목록
+  renderAddedVacList();
+
+  // 동 드롭다운 채우기
+  const dongSel = document.getElementById('new-vac-dong');
+  if(dongSel.options.length===1){
+    DONGS.forEach(d=>{ const o=document.createElement('option'); o.value=d; o.textContent=d; dongSel.appendChild(o); });
+    dongSel.onchange = ()=>{
+      const d = dongSel.value;
+      const hoSel = document.getElementById('new-vac-ho');
+      hoSel.innerHTML='<option value="">호수 선택</option>';
+      if(d && UNITS[d]) UNITS[d].forEach(ho=>{ const o=document.createElement('option'); o.value=ho; o.textContent=ho; hoSel.appendChild(o); });
+    };
+  }
+}
+
+function jumpToUnit(u){
+  const parts = u.split(' ');
+  const dong = parts[0], ho = parts[1];
+  selDong = dong; selUnit = '';
+  switchTab('form');
+  setTimeout(()=>{ pickUnit(ho); }, 100);
+}
+
+function addNewVacancy(){
+  const dong = document.getElementById('new-vac-dong').value;
+  const ho = document.getElementById('new-vac-ho').value;
+  const area = parseFloat(document.getElementById('new-vac-area').value);
+  const res = document.getElementById('new-vac-result');
+  if(!dong||!ho){res.style.color='#dc2626';res.textContent='⚠️ 동과 호수를 선택해주세요';return;}
+  if(!area){res.style.color='#dc2626';res.textContent='⚠️ 평형을 선택해주세요';return;}
+  const key = dong+' '+ho;
+  const extra = loadExtraVac();
+  if(UNIT_AREA[key]||extra[key]){res.style.color='#f97316';res.textContent='⚠️ 이미 공가 목록에 있어요';return;}
+  extra[key] = area;
+  saveExtraVac(extra);
+  res.style.color='#16a34a';
+  res.textContent='✅ '+key+' 공가 등록 완료!';
+  renderDash();
+  renderUnits();
+  renderVacXlsSummary();
+  updBadge();
+  if(document.getElementById('pane-records').style.display!=='none') renderRecs();
+  setTimeout(()=>res.textContent='',3000);
+}
+
+function removeExtraVac(key){
+  showConfirmModal('🗑️ 공가 해제', key+' 를 공가 목록에서 제거할까요?', ()=>{
+    const extra = loadExtraVac();
+    delete extra[key];
+    saveExtraVac(extra);
+    renderDash();
+    renderUnits();
+    renderVacXlsSummary();
+    updBadge();
+    if(document.getElementById('pane-records').style.display!=='none') renderRecs();
+    toast('✅ '+key+' 공가 해제됨');
+  });
+}
+
+function renderAddedVacList(){
+  const extra = loadExtraVac();
+  const keys = Object.keys(extra);
+  const el = document.getElementById('added-vac-list');
+  if(!keys.length){el.innerHTML='';return;}
+  const AREA_LABEL2 = {17.2:'29A',21.2:'36A',21.3:'36B',27.0:'46A/B',29.7:'51A',34.5:'59A'};
+  el.innerHTML = `<div style="font-size:11px;font-weight:700;color:#f97316;margin-bottom:6px">📋 추가 등록된 공가 (${keys.length}세대)</div>`
+    + keys.map(k=>`<div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:8px;padding:6px 10px;margin-bottom:4px;font-size:12px;border:1px solid #fed7aa">
+      <span><b>${k}</b> · ${AREA_LABEL2[extra[k]]||''}</span>
+      <button onclick="removeExtraVac('${k}')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">해제</button>
+    </div>`).join('');
+}
+
+function showAreaDrill(area){
+  const allVac = getAllVacancies();
+  const AREA_LABEL2={17.2:'29A (13평)',21.2:'36A (16평)',21.3:'36B (16평)',27.0:'46A/46B (19평)',29.7:'51A (21평)',34.5:'59A (24평)'};
+  const ac = AREA_COLOR[area];
+  const units = Object.keys(allVac).filter(u=>allVac[u]==area);
+
+  // 동별 그룹화
+  const byDong = {};
+  units.forEach(u=>{ const d=u.split(' ')[0]; if(!byDong[d]) byDong[d]=[]; byDong[d].push(u); });
+
+  const panel = document.getElementById('area-drill-panel');
+  const title = document.getElementById('area-drill-title');
+  const list  = document.getElementById('area-drill-list');
+
+  // 이미 열려있으면 닫기
+  if(panel.dataset.area == area && panel.style.display !== 'none'){
+    panel.style.display='none'; panel.dataset.area=''; return;
+  }
+  panel.dataset.area = area;
+  title.innerHTML = `<span style="background:${ac?ac.bg:'#f1f5f9'};border:1.5px solid ${ac?ac.border:'#cbd5e1'};border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700">${AREA_LABEL2[area]||area+'평'}</span> <span style="color:#475569"> 해당 세대 ${units.length}개</span>`;
+
+  list.innerHTML = Object.entries(byDong).map(([dong, dus])=>{
+    const chips = dus.map(u=>{
+      const ho = u.split(' ')[1];
+      const isDone = records.some(r=>r.unit===u);
+      const bg = isDone ? '#f0fdf4' : (ac?ac.bg:'#f1f5f9');
+      const border = isDone ? '#bbf7d0' : (ac?ac.border:'#cbd5e1');
+      const color = isDone ? '#15803d' : '#1e293b';
+      const badge = isDone ? '✅' : '';
+      return `<button onclick="jumpToUnit('${u}')" style="background:${bg};border:1.5px solid ${border};border-radius:7px;padding:4px 8px;font-size:11px;font-weight:700;color:${color};cursor:pointer">${badge}${ho}</button>`;
+    }).join('');
+    return `<div>
+      <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:4px">${dong} (${dus.length}세대)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${chips}</div>
+    </div>`;
+  }).join('');
+
+  panel.style.display = 'block';
+  panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+
+function genPlan(){
+  const n = parseInt(document.getElementById('plan-count').value)||10;
+  const allVac = getAllVacancies();
+  const undone = Object.keys(allVac).filter(u=>!records.some(r=>r.unit===u));
+  if(!undone.length){document.getElementById('plan-result').innerHTML='<span style="color:#16a34a;font-weight:700">🎉 모든 세대 점검 완료!</span>';return;}
+  // 동 순서대로 균등하게 배분
+  const byDong = {};
+  undone.forEach(u=>{const d=u.split(' ')[0];if(!byDong[d])byDong[d]=[];byDong[d].push(u);});
+  const picks=[];
+  let i=0;
+  while(picks.length<n && picks.length<undone.length){
+    const dongs=Object.keys(byDong).filter(d=>byDong[d].length>i);
+    if(!dongs.length) break;
+    dongs.forEach(d=>{ if(picks.length<n && byDong[d][i]) picks.push(byDong[d][i]); });
+    i++;
+  }
+  const AREA_LABEL2={17.2:'29A',21.2:'36A',21.3:'36B',27.0:'46A/B',29.7:'51A',34.5:'59A'};
+  document.getElementById('plan-result').innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:8px">📋 오늘 추천 점검 ${picks.length}세대</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px">
+      ${picks.map(u=>{
+        const ac=AREA_COLOR[allVac[u]];
+        return `<button onclick="jumpToUnit('${u}')" style="background:${ac?ac.bg:'#f1f5f9'};border:1.5px solid ${ac?ac.border:'#cbd5e1'};border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700;color:#1e293b;cursor:pointer">${u}</button>`;
+      }).join('')}
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:#94a3b8">👆 세대를 탭하면 바로 이동해요</div>`;
+}
+
+/* ───── 보고서 추가 기능 ───── */
+
+// ① 공가현황 엑셀
+function exportVacancyXls(){
+  const allVac = getAllVacancies();
+  const BLDS2 = {
+    '701동':{floors:13,lines:[1,2,3,4]},
+    '702동':{floors:20,lines:[1,2,3,4,5,6,7]},
+    '703동':{floors:20,lines:[1,2,3,4,5,6,7]},
+    '704동':{floors:15,lines:[1,2,3,4,5,6]},
+    '705동':{floors:11,lines:[1,2,3,4,5,6]},
+    '706동':{floors:11,lines:[1,2,3,4]},
+    '707동':{floors:14,lines:[1,2,3,4,5,6],skip:[[1,3],[1,4]]},
+    '708동':{floors:13,lines:[1,2,3,4,5,6,7,8,9,10],partialFrom:11,partialLines:[9,10]},
+    '709동':{floors:13,lines:[1,2,3,4,5,6,7,8],partialFrom:11,partialLines:[5,6,7,8]},
+    '710동':{floors:20,lines:[1,2,3,4,5,6,7]},
+    '711동':{floors:15,lines:[1,2,3,4]},
+    '712동':{floors:12,lines:[1,2,3,4]},
+    '713동':{floors:13,lines:[1,2,3,4]},
+    '714동':{floors:20,lines:[1,2,3,4,5,6,7]},
+  };
+  const AREA_LBL = {17.2:'29A(13평)',21.2:'36A(16평)',21.3:'36B(16평)',27.0:'46A/B(19평)',29.7:'51A(21평)',34.5:'59A(24평)'};
+  const wb = XLSX.utils.book_new();
+  const allRows = [['동','호수','공가','평형','점검완료','최근점검일','점검차수']];
+  DONGS.forEach(dong=>{
+    const cfg = BLDS2[dong]; if(!cfg) return;
+    for(let fl=1;fl<=cfg.floors;fl++){
+      cfg.lines.forEach(ln=>{
+        if(cfg.partialFrom && fl>=cfg.partialFrom && cfg.partialLines.includes(ln)) return;
+        if((cfg.skip||[]).some(s=>s[0]===fl&&s[1]===ln)) return;
+        const ho=`${fl*100+ln}호`, u=`${dong} ${ho}`;
+        const isVac = allVac.hasOwnProperty(u);
+        const recs = records.filter(r=>r.unit===u);
+        const last = recs[recs.length-1];
+        allRows.push([dong, ho, isVac?'공가':'', isVac?AREA_LBL[allVac[u]]||'':'', isVac&&last?'완료':'', last?last.date:'', last?last.type:'']);
+      });
+    }
+  });
+  const ws = XLSX.utils.aoa_to_sheet(allRows);
+  ws['!cols']=[{wch:8},{wch:8},{wch:6},{wch:12},{wch:8},{wch:12},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws, '전체세대_공가현황');
+
+  // 공가만 시트
+  const vacRows = [['순번','동','호수','평형','점검완료','최근점검일','점검차수']];
+  let idx=1;
+  DONGS.forEach(dong=>{
+    Object.keys(allVac).filter(u=>u.startsWith(dong)).sort().forEach(u=>{
+      const ho=u.split(' ')[1];
+      const recs=records.filter(r=>r.unit===u), last=recs[recs.length-1];
+      vacRows.push([idx++, dong, ho, AREA_LBL[allVac[u]]||'', last?'완료':'미완료', last?last.date:'', last?last.type:'']);
+    });
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(vacRows);
+  ws2['!cols']=[{wch:6},{wch:8},{wch:8},{wch:12},{wch:8},{wch:12},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws2, '공가세대만');
+
+  const fn = `공가현황_${now8()}.xlsx`;
+  XLSX.writeFile(wb, fn);
+  document.getElementById('vac-xls-fname').textContent = '✅ '+fn;
+  toast('🏢 공가현황 엑셀 저장 완료!');
+}
+
+function renderVacXlsSummary(){
+  const allVac = getAllVacancies();
+  const done = Object.keys(allVac).filter(u=>records.some(r=>r.unit===u)).length;
+  const el = document.getElementById('vac-xls-summary');
+  if(el) el.textContent = `공가 총 ${Object.keys(allVac).length}세대 · 점검완료 ${done}세대 · 미완료 ${Object.keys(allVac).length-done}세대`;
+}
+
+// ② 동별 요약 PDF
+let _dongRptMode = 'all';
+function setDongRpt(v, btn){
+  _dongRptMode = v;
+  document.querySelectorAll('#dong-rpt-btns .period-btn').forEach(b=>b.classList.toggle('on',b===btn));
+  const wrap = document.getElementById('dong-sel-wrap');
+  wrap.style.display = v==='sel'?'block':'none';
+}
+
+function exportDongSummaryPdf(){
+  const allVac = getAllVacancies();
+  let targetDongs;
+  if(_dongRptMode==='sel'){
+    const sel = document.getElementById('dong-rpt-sel');
+    targetDongs = Array.from(sel.selectedOptions).map(o=>o.value);
+    if(!targetDongs.length){toast('⚠️ 동을 선택해주세요');return;}
+  } else {
+    targetDongs = DONGS;
+  }
+  const cvs = document.createElement('canvas');
+  const cw=794, lh=22, pad=40;
+  const rows = [];
+  // 헤더
+  rows.push({type:'title', text:'양주율정마을7단지 동별 점검 현황 보고서'});
+  rows.push({type:'date', text:'출력일: '+new Date().toLocaleDateString('ko-KR')});
+  rows.push({type:'gap'});
+  const AREA_LBL2={17.2:'29A(13평)',21.2:'36A(16평)',21.3:'36B(16평)',27.0:'46A/B(19평)',29.7:'51A(21평)',34.5:'59A(24평)'};
+  targetDongs.forEach(dong=>{
+    const vacUnits = Object.keys(allVac).filter(u=>u.startsWith(dong));
+    if(!vacUnits.length) return;
+    const done = vacUnits.filter(u=>records.some(r=>r.unit===u)).length;
+    const pct = Math.round(done/vacUnits.length*100);
+    rows.push({type:'dong', dong, total:vacUnits.length, done, pct});
+    // 평형별 소계
+    const areaSub = {};
+    vacUnits.forEach(u=>{
+      const a=allVac[u]; if(!areaSub[a]) areaSub[a]={total:0,done:0};
+      areaSub[a].total++;
+      if(records.some(r=>r.unit===u)) areaSub[a].done++;
+    });
+    Object.entries(areaSub).sort().forEach(([a,s])=>{
+      rows.push({type:'area', label:AREA_LBL2[a]||a+'평', total:s.total, done:s.done});
+    });
+    rows.push({type:'gap'});
+  });
+
+  // 캔버스 높이 계산
+  let ch = pad*2;
+  rows.forEach(r=>{ ch += r.type==='title'?36:r.type==='date'?20:r.type==='gap'?10:r.type==='dong'?32:24; });
+  cvs.width=cw; cvs.height=Math.max(ch,200);
+  const cx=cvs.getContext('2d');
+  cx.fillStyle='#fff'; cx.fillRect(0,0,cw,ch);
+  let y=pad;
+  rows.forEach(row=>{
+    if(row.type==='title'){
+      cx.fillStyle='#1e3a5f'; cx.fillRect(0,y-6,cw,44);
+      cx.fillStyle='#fff'; cx.font='bold 20px Arial';
+      cx.fillText(row.text, pad, y+22); y+=36;
+    } else if(row.type==='date'){
+      cx.fillStyle='#64748b'; cx.font='13px Arial';
+      cx.fillText(row.text, pad, y+14); y+=20;
+    } else if(row.type==='gap'){
+      y+=10;
+    } else if(row.type==='dong'){
+      cx.fillStyle='#1e40af'; cx.fillRect(pad-8,y,cw-pad*2+16,28);
+      cx.fillStyle='#fff'; cx.font='bold 15px Arial';
+      cx.fillText(`${row.dong}  ${row.done}/${row.total}세대 (${row.pct}%)`, pad, y+19);
+      // 진행 바
+      const bx=pad+300, bw=200;
+      cx.fillStyle='rgba(255,255,255,0.3)'; cx.fillRect(bx,y+8,bw,12);
+      cx.fillStyle='#fff'; cx.fillRect(bx,y+8,bw*row.pct/100,12);
+      y+=32;
+    } else if(row.type==='area'){
+      cx.fillStyle='#f8fafc'; cx.fillRect(pad,y,cw-pad*2,20);
+      cx.fillStyle='#374151'; cx.font='12px Arial';
+      cx.fillText(`  ${row.label}  →  ${row.done}/${row.total}세대`, pad+10, y+14);
+      const pct2=Math.round(row.done/row.total*100);
+      cx.fillStyle='#e2e8f0'; cx.fillRect(pad+300,y+5,150,10);
+      cx.fillStyle='#2563eb'; cx.fillRect(pad+300,y+5,150*pct2/100,10);
+      cx.fillStyle='#374151'; cx.font='11px Arial';
+      cx.fillText(pct2+'%', pad+458, y+14);
+      y+=24;
+    }
+  });
+  const img = cvs.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href=img; a.download=`동별요약_${now8()}.png`; a.click();
+  toast('🏗️ 동별 요약 보고서 저장 완료!');
+}
+
+// ③ 월간 통계
+function renderMonthlyStat(){
+  const yr = parseInt(document.getElementById('stat-year').value);
+  const mo = parseInt(document.getElementById('stat-month').value);
+  const el = document.getElementById('monthly-stat-result');
+  let recs = records.filter(r=>r.date&&r.date.startsWith(yr+''));
+  if(mo>0) recs = recs.filter(r=>r.date.slice(5,7)===String(mo).padStart(2,'0'));
+  if(!recs.length){el.innerHTML='<div style="color:#94a3b8;font-size:12px;text-align:center;padding:12px">해당 기간 기록 없음</div>';return;}
+
+  // 일별 집계
+  const byDate={};
+  recs.forEach(r=>{ byDate[r.date]=(byDate[r.date]||0)+1; });
+  const dates=Object.keys(byDate).sort();
+  const maxVal=Math.max(...Object.values(byDate));
+
+  let html=`<div style="font-size:12px;color:#f97316;font-weight:700;margin-bottom:8px">총 ${recs.length}건 · ${dates.length}일 작업</div>`;
+  html+=`<div style="display:flex;flex-direction:column;gap:3px">`;
+  dates.forEach(d=>{
+    const cnt=byDate[d];
+    const barW=Math.round(cnt/maxVal*160);
+    html+=`<div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:11px;color:#475569;min-width:70px">${d.slice(5).replace('-','/')}</span>
+      <div style="background:#fed7aa;border-radius:4px;height:16px;width:${barW}px;min-width:4px"></div>
+      <span style="font-size:11px;font-weight:700;color:#f97316">${cnt}건</span>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // 동별 집계
+  const byDong={};
+  recs.forEach(r=>{ const d=r.unit.split(' ')[0]; byDong[d]=(byDong[d]||0)+1; });
+  html+=`<div style="margin-top:10px;font-size:12px;font-weight:700;color:#475569;margin-bottom:6px">동별 현황</div>`;
+  html+=`<div style="display:flex;flex-wrap:wrap;gap:4px">`;
+  Object.entries(byDong).sort((a,b)=>b[1]-a[1]).forEach(([dong,cnt])=>{
+    html+=`<span style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#c2410c">${dong} ${cnt}건</span>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
+// ④ 세대별 점검 이력
+function renderHistHo(){
+  const dong = document.getElementById('hist-dong').value;
+  const hoSel = document.getElementById('hist-ho');
+  hoSel.innerHTML='<option value="">호수 선택</option>';
+  if(dong && UNITS[dong]) UNITS[dong].forEach(ho=>{const o=document.createElement('option');o.value=ho;o.textContent=ho;hoSel.appendChild(o);});
+}
+function renderUnitHistory(){
+  const dong=document.getElementById('hist-dong').value;
+  const ho=document.getElementById('hist-ho').value;
+  const el=document.getElementById('unit-hist-result');
+  if(!dong||!ho){el.innerHTML='<div style="color:#94a3b8;font-size:12px;text-align:center;padding:10px">동과 호수를 선택해주세요</div>';return;}
+  const u=dong+' '+ho;
+  const recs=records.filter(r=>r.unit===u).sort((a,b)=>a.date>b.date?1:-1);
+  // ── 세대 바로가기 버튼 ──
+  const gotoBtn=`<button onclick="gotoUnit('${dong}','${ho}')" style="width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px">📝 ${u} 점검입력으로 이동</button>`;
+  if(!recs.length){el.innerHTML=gotoBtn+`<div style="color:#94a3b8;font-size:12px;text-align:center;padding:12px">${u} 점검 기록 없음</div>`;return;}
+  const METERS=['전기','수도','온수','난방','가스'];
+  el.innerHTML=gotoBtn+recs.map((r,i)=>{
+    const sc=SC[r.status]||SC['입주가능'];
+    const meters=METERS.map(m=>{
+      const prev=r[m+'_prev'], curr=r[m+'_curr'];
+      if(!prev&&!curr) return '';
+      return `<span style="font-size:10px;color:#475569">${m}: ${prev||'-'}→${curr||'-'}</span>`;
+    }).filter(Boolean).join(' · ');
+    return `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px 12px;margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-weight:700;font-size:13px;color:#0891b2">${r.type}</span>
+        <span style="background:${sc.bg};color:${sc.fg};border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">${r.status}</span>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:${meters||r.memo?'4px':'0'}">📅 ${r.date} · 🙋 ${r.inspector||'-'}</div>
+      ${meters?`<div style="margin-bottom:${r.memo?'4px':'0'}">${meters}</div>`:''}
+      ${r.notes?`<div style="font-size:11px;color:#374151;background:#fff;border-radius:6px;padding:4px 8px">💬 ${r.notes}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// 이력조회 → 점검입력 세대 바로가기
+function gotoUnit(dong, ho){
+  switchTab('form');
+  setTimeout(()=>{
+    selDong = dong;
+    renderDongs();
+    setTimeout(()=>{
+      pickUnit(ho);
+      // 화면 맨 위로 스크롤
+      window.scrollTo({top:0, behavior:'smooth'});
+      toast(`📝 ${dong} ${ho} 점검입력으로 이동했어요`);
+    }, 100);
+  }, 150);
+}
+
+/* ─── 보고서 카테고리 탭 전환 ─── */
+function switchRptCat(cat, btn){
+  ['excel','pdf','stat','history'].forEach(c=>{
+    document.getElementById('rpt-cat-'+c).style.display = c===cat?'':'none';
+  });
+  document.querySelectorAll('#rpt-cat-btns .rpt-cat').forEach(b=>b.classList.toggle('on',b===btn));
+  if(cat==='excel') renderAreaXlsSummary();
+}
+
+/* ─── 평형별 엑셀 ─── */
+let _areaFilter = 'all';
+function setAreaFilter(v, btn){
+  _areaFilter = v;
+  document.querySelectorAll('#area-filter-btns .period-btn').forEach(b=>b.classList.toggle('on',b===btn));
+  renderAreaXlsSummary();
+}
+function renderAreaXlsSummary(){
+  const el = document.getElementById('area-xls-summary');
+  if(!el) return;
+  const allVac = getAllVacancies();
+  const AREA_LABEL = {17.2:'29A (13평)',21.2:'36A (16평)',21.3:'36B (16평)',27.0:'46A/B (19평)',29.7:'51A (21평)',34.5:'59A (24평)'};
+  if(_areaFilter === 'all'){
+    const byArea = {};
+    Object.entries(allVac).forEach(([u,a])=>{
+      if(!byArea[a]) byArea[a]={total:0,done:0};
+      byArea[a].total++;
+      if(records.some(r=>r.unit===u)) byArea[a].done++;
+    });
+    el.innerHTML = Object.entries(byArea).sort((a,b)=>parseFloat(a[0])-parseFloat(b[0])).map(([a,v])=>{
+      const pct=Math.round(v.done/v.total*100);
+      return `<span style="margin-right:8px">${AREA_LABEL[a]||a+'평'}: <b>${v.done}/${v.total}</b>(${pct}%)</span>`;
+    }).join('');
+  } else {
+    const area = parseFloat(_areaFilter);
+    const units = Object.entries(allVac).filter(([u,a])=>a===area);
+    const done = units.filter(([u])=>records.some(r=>r.unit===u)).length;
+    el.innerHTML = `${AREA_LABEL[area]||area+'평'} · 총 <b>${units.length}</b>세대 · 완료 <b>${done}</b>세대 · 미완료 <b>${units.length-done}</b>세대`;
+  }
+}
+function exportAreaXls(){
+  const allVac = getAllVacancies();
+  const AREA_LABEL = {17.2:'29A (13평)',21.2:'36A (16평)',21.3:'36B (16평)',27.0:'46A/B (19평)',29.7:'51A (21평)',34.5:'59A (24평)'};
+  const AREAS = _areaFilter==='all' ? [17.2,21.2,21.3,27.0,29.7,34.5] : [parseFloat(_areaFilter)];
+  const wb = XLSX.utils.book_new();
+  const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+
+  // 요약 시트
+  const summaryRows = [['평형','세대수','완료','미완료','완료율']];
+  AREAS.forEach(area=>{
+    const units = Object.entries(allVac).filter(([u,a])=>a===area);
+    if(!units.length) return;
+    const done = units.filter(([u])=>records.some(r=>r.unit===u)).length;
+    summaryRows.push([AREA_LABEL[area]||area+'평', units.length, done, units.length-done, Math.round(done/units.length*100)+'%']);
+  });
+  const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+  wsSummary['!cols']=[{wch:16},{wch:8},{wch:8},{wch:8},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, '전체요약');
+
+  // 평형별 시트
+  AREAS.forEach(area=>{
+    const label = AREA_LABEL[area]||area+'평';
+    const units = Object.entries(allVac).filter(([u,a])=>a===area);
+    if(!units.length) return;
+    const rows = [['동','호수','평형','점검완료','최근점검일','최근차수','상태','메모']];
+    units.sort((a,b)=>a[0].localeCompare(b[0])).forEach(([u])=>{
+      const [dong, ho] = u.split(' ');
+      const recs = records.filter(r=>r.unit===u).sort((a,b)=>b.date.localeCompare(a.date));
+      const last = recs[0];
+      rows.push([
+        dong, ho, label,
+        recs.length?'완료':'미완료',
+        last?last.date:'-',
+        last?last.type:'-',
+        last?last.status:'-',
+        last?last.memo:'-'
+      ]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:8},{wch:8},{wch:14},{wch:10},{wch:12},{wch:8},{wch:10},{wch:30}];
+    const sheetName = label.replace(/[/]/g,'-').substring(0,31);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  });
+
+  const fname = `평형별점검현황_${today}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  document.getElementById('area-xls-fname').textContent = '✅ '+fname;
+}
+
+/* ─── 점검자별 통계 ─── */
+function renderInspectorStat(){
+  const el = document.getElementById('inspector-stat-result');
+  if(!records.length){el.innerHTML='<div style="color:#94a3b8;font-size:12px">점검 기록이 없습니다.</div>';return;}
+  const map = {};
+  records.forEach(r=>{
+    const name = r.inspector||'(미입력)';
+    if(!map[name]) map[name]={total:0,units:new Set(),dongs:new Set()};
+    map[name].total++;
+    map[name].units.add(r.unit);
+    map[name].dongs.add(r.unit.split(' ')[0]);
+  });
+  const sorted = Object.entries(map).sort((a,b)=>b[1].total-a[1].total);
+  el.innerHTML = sorted.map(([name,v],i)=>{
+    const colors = ['#2563eb','#16a34a','#f97316','#7c3aed','#0891b2','#dc2626'];
+    const c = colors[i%colors.length];
+    return `<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+      <div style="background:${c};color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${i+1}</div>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:13px;color:#1e293b">${name}</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">점검 <b style="color:${c}">${v.total}건</b> · 세대 <b>${v.units.size}개</b> · ${[...v.dongs].sort().join(', ')}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── 상태별 현황 ─── */
+function renderStatusStat(){
+  const el = document.getElementById('status-stat-result');
+  const allVac = getAllVacancies();
+  const latest = {};
+  records.forEach(r=>{ if(!latest[r.unit]||r.date>latest[r.unit].date) latest[r.unit]=r; });
+  const groups = {'입주가능':[],'수리중':[],'하자있음':[],'입주청소전':[],'미점검':[]};
+  Object.keys(allVac).forEach(u=>{
+    if(latest[u]) groups[latest[u].status]?groups[latest[u].status].push(u):(groups['입주가능'].push(u));
+    else groups['미점검'].push(u);
+  });
+  const cfg = {
+    '하자있음':{color:'#dc2626',bg:'#fee2e2',label:'🚨 하자있음'},
+    '수리중':{color:'#c2410c',bg:'#fff7ed',label:'🔧 수리중'},
+    '입주청소전':{color:'#1d4ed8',bg:'#eff6ff',label:'🧹 입주청소전'},
+    '입주가능':{color:'#16a34a',bg:'#dcfce7',label:'✅ 입주가능'},
+    '미점검':{color:'#64748b',bg:'#f1f5f9',label:'🔲 미점검'},
+  };
+  el.innerHTML = Object.entries(cfg).map(([st,c])=>{
+    const list = groups[st]||[];
+    if(!list.length) return `<div style="background:${c.bg};border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;color:${c.color}">${c.label}</span><span style="font-size:11px;color:#94a3b8">0세대</span></div>`;
+    return `<div style="background:${c.bg};border-radius:10px;padding:10px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-weight:800;font-size:13px;color:${c.color}">${c.label}</span>
+        <span style="font-weight:700;color:${c.color}">${list.length}세대</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${list.slice(0,20).map(u=>`<button onclick="jumpToUnit('${u}')" style="background:#fff;border:1px solid ${c.color}33;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:700;color:${c.color};cursor:pointer">${u.replace(/ /g,' ')}</button>`).join('')}${list.length>20?`<span style="font-size:10px;color:#94a3b8">외 ${list.length-20}세대</span>`:''}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── 이상세대 목록 ─── */
+let _issueFilter = 'all';
+function setIssueFilter(v, btn){
+  _issueFilter = v;
+  document.querySelectorAll('#issue-filter-btns .period-btn').forEach(b=>b.classList.toggle('on',b===btn));
+}
+function renderIssueList(){
+  const el = document.getElementById('issue-list-result');
+  const latest = {};
+  records.forEach(r=>{ if(!latest[r.unit]||r.date>latest[r.unit].date) latest[r.unit]=r; });
+  let issues = Object.values(latest).filter(r=>r.status==='수리중'||r.status==='하자있음'||r.status==='입주청소전');
+  if(_issueFilter!=='all') issues = issues.filter(r=>r.status===_issueFilter);
+  if(!issues.length){el.innerHTML='<div style="color:#94a3b8;font-size:12px;padding:8px 0">해당 세대가 없습니다.</div>';return;}
+  const stOrder={'하자있음':0,'수리중':1,'입주청소전':2};
+  issues.sort((a,b)=>(stOrder[a.status]??3)-(stOrder[b.status]??3)||(b.date>a.date?1:-1));
+  const SC2 = {'수리중':{bg:'#fff7ed',fg:'#c2410c',bd:'#fed7aa'},'하자있음':{bg:'#fee2e2',fg:'#dc2626',bd:'#fecaca'},'입주청소전':{bg:'#eff6ff',fg:'#1d4ed8',bd:'#bfdbfe'}};
+  el.innerHTML = `<div style="font-size:11px;color:#64748b;margin-bottom:8px">총 ${issues.length}세대</div>`+
+    issues.map(r=>{
+      const sc=SC2[r.status]||SC2['수리중'];
+      return `<div style="background:${sc.bg};border:1.5px solid ${sc.bd};border-radius:10px;padding:10px 14px;margin-bottom:8px;cursor:pointer" onclick="jumpToUnit('${r.unit}')">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-weight:800;font-size:13px;color:${sc.fg}">${r.unit}</span>
+          <span style="background:${sc.bd};color:${sc.fg};border-radius:6px;padding:1px 8px;font-size:11px;font-weight:700">${r.status}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b">📅 ${r.date} · ${r.type}${r.memo?` · 💬 ${r.memo.slice(0,30)}${r.memo.length>30?'…':''}`:''}</div>
+      </div>`;
+    }).join('');
+}
+
+/* ─── 메모 검색 ─── */
+function renderMemoSearch(){
+  const keyword = (document.getElementById('memo-search-input').value||'').trim();
+  const el = document.getElementById('memo-search-result');
+  if(!keyword){el.innerHTML='<div style="color:#94a3b8;font-size:12px">검색어를 입력하세요.</div>';return;}
+  const hits = records.filter(r=>r.memo&&r.memo.includes(keyword)).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!hits.length){el.innerHTML=`<div style="color:#94a3b8;font-size:12px">"${keyword}" 검색 결과 없음</div>`;return;}
+  el.innerHTML = `<div style="font-size:11px;color:#64748b;margin-bottom:8px">${hits.length}건 검색됨</div>`+
+    hits.map(r=>{
+      const hi = r.memo.replace(new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'),`<mark style="background:#fef08a;color:#1e293b">${keyword}</mark>`);
+      return `<div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:8px;cursor:pointer" onclick="jumpToUnit('${r.unit}')">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-weight:800;font-size:13px;color:#1e293b">${r.unit}</span>
+          <span style="font-size:11px;color:#64748b">${r.date} · ${r.type}</span>
+        </div>
+        <div style="font-size:12px;color:#374151;line-height:1.6">${hi}</div>
+      </div>`;
+    }).join('');
+}
+
+function initReportExtras(){
+  // 연도 드롭다운
+  const yrSel=document.getElementById('stat-year');
+  if(yrSel&&!yrSel.options.length){
+    const yr=new Date().getFullYear();
+    for(let y=yr;y>=yr-3;y--){const o=document.createElement('option');o.value=y;o.textContent=y+'년';if(y===yr)o.selected=true;yrSel.appendChild(o);}
+  }
+  // 동별요약 동 선택 셀렉트
+  const ds=document.getElementById('dong-rpt-sel');
+  if(ds&&!ds.options.length) DONGS.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;ds.appendChild(o);});
+  // 세대별 이력 동 드롭다운
+  const hd=document.getElementById('hist-dong');
+  if(hd&&hd.options.length===1) DONGS.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;hd.appendChild(o);});
+  renderVacXlsSummary();
+  renderAreaXlsSummary();
+}
+
+let _pdfPeriod='all', _rptPeriod='all', _pdfIncludePhotos=true;
+
+function setPdfPhotoOpt(include, btn){
+  _pdfIncludePhotos = include;
+  document.querySelectorAll('#pdf-photo-yes, #pdf-photo-no').forEach(b=>b.classList.toggle('on', b===btn));
+  const desc = document.getElementById('pdf-photo-desc');
+  if(include){
+    desc.textContent = '사진 포함 시 파일 크기가 커질 수 있습니다';
+    desc.style.color = '#94a3b8';
+  } else {
+    desc.textContent = '✅ 사진 제외 — 파일이 가볍고 빠르게 저장됩니다';
+    desc.style.color = '#16a34a';
+  }
+}
+
+function setPdfPeriod(v,btn){
+  _pdfPeriod=v;
+  document.querySelectorAll('#pdf-period-btns .period-btn').forEach(b=>b.classList.toggle('on',b===btn));
+  document.getElementById('pdf-custom-range').style.display=v==='custom'?'flex':'none';
+  renderPdfPreview();
+}
+function setRptPeriod(v,btn){
+  _rptPeriod=v;
+  document.querySelectorAll('#rpt-period-btns .period-btn').forEach(b=>b.classList.toggle('on',b===btn));
+  document.getElementById('rpt-custom-range').style.display=v==='custom'?'flex':'none';
+  renderRptPreview();
+}
+function getFilteredRecs(period, fromId, toId){
+  const now=new Date(), today=now.toISOString().slice(0,10);
+  let from='', to='';
+  if(period==='today'){from=today;to=today;}
+  else if(period==='week'){const d=new Date(now);d.setDate(d.getDate()-d.getDay()+1);from=d.toISOString().slice(0,10);to=today;}
+  else if(period==='month'){from=today.slice(0,7)+'-01';to=today;}
+  else if(period==='custom'){from=document.getElementById(fromId).value;to=document.getElementById(toId).value;}
+  if(!from&&!to)return records.slice();
+  return records.filter(r=>(!from||r.date>=from)&&(!to||r.date<=to));
+}
+function renderPdfPreview(){
+  const recs=getFilteredRecs(_pdfPeriod,'pdf-range-from','pdf-range-to');
+  document.getElementById('pdf-preview').textContent=recs.length?`📋 ${recs.length}건 포함`:'조건에 맞는 기록 없음';
+}
+function renderRptPreview(){
+  const recs=getFilteredRecs(_rptPeriod,'rpt-range-from','rpt-range-to');
+  document.getElementById('rpt-preview').textContent=recs.length?`📋 ${recs.length}건 포함`:'조건에 맞는 기록 없음';
+}
+function exportPdfReport(){
+  const recs=getFilteredRecs(_pdfPeriod,'pdf-range-from','pdf-range-to');
+  if(!recs.length){toast('⚠️ 해당 기간에 기록이 없어요');return;}
+  const withPhoto = _pdfIncludePhotos;
+  if(recs.length===1){savePDF(recs[0],'btn-pdf-report',withPhoto);return;}
+  toast('📄 '+recs.length+'건 PDF 개별 저장 시작...');
+  let i=0;
+  function next(){
+    if(i>=recs.length)return;
+    savePDF(recs[i],'btn-pdf-report',withPhoto);
+    i++;
+    setTimeout(next,800);
+  }
+  next();
+}
+
+/* ───── 세대 UI ───── */
+function renderDongs(){
+  document.getElementById('dong-wrap').innerHTML=DONGS.map(d=>`<button class="dong-btn${d===selDong?' on':''}" onclick="pickDong('${d}')">${d}</button>`).join('');
+}
+function pickDong(d){
+  if(selUnit) saveDraft();
+  selDong=d;selUnit='';savedRec=null;
+  stopDraftTimer();
+  renderDongs();renderUnits();renderSelInfo();showFormBody(false);
+}
+function renderUnits(){
+  // 동 선택 시 총세대/공가세대 수 업데이트
+  const _allVac = getAllVacancies();
+  const _dongVac = Object.keys(_allVac).filter(u=>u.startsWith(selDong));
+  const _totalUnits = (()=>{
+    const cfg=BLDS[selDong]; let cnt=0;
+    for(let f=1;f<=cfg.floors;f++){
+      cfg.lines.forEach(l=>{
+        if(cfg.skip&&cfg.skip.some(s=>s[0]===f&&s[1]===l))return;
+        if(cfg.partialFrom&&f>=cfg.partialFrom&&cfg.partialLines&&!cfg.partialLines.includes(l))return;
+        cnt++;
+      });
+    }
+    return cnt;
+  })();
+  const _cntEl = document.getElementById('dong-unit-count');
+  if(_cntEl) _cntEl.textContent = `총 ${_totalUnits}세대 · 공가 ${_dongVac.length}세대`;
+  const cfg=BLDS[selDong],cols=Math.min(cfg.lines.length,8);
+  const g=document.getElementById('unit-grid');
+  g.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  g.innerHTML=UNITS[selDong].map(ho=>{
+    const u=selDong+' '+ho,recs=records.filter(r=>r.unit===u),last=recs[recs.length-1];
+    let cls='u-btn';
+    let extraStyle='';
+    const allVac=getAllVacancies();
+    const area=allVac[u];
+    const ac=area?AREA_COLOR[area]:null;
+    if(!last && ac) extraStyle=`background:${ac.bg};border-color:${ac.border};`;
+    if(u===selDong+' '+selUnit)cls+=' sel';
+    else if(last)cls+=' s'+last.status;
+    const mb=recs.length>1?`<span class="multi-dot">${recs.length}</span>`:'';
+    const ct=currentType(u);
+    const typeNum=ct?ct.replace('차',''):'';
+    const typeBadge=typeNum?`<span style="position:absolute;top:1px;right:1px;background:${last?'#16a34a':'#2563eb'};color:#fff;border-radius:3px;font-size:8px;padding:0 2px;line-height:1.4;font-weight:700">${typeNum}</span>`:'';
+    return`<button class="${cls}" onclick="pickUnit('${ho}')" style="position:relative;${extraStyle}">${ho.replace('호','')}${mb}${typeBadge}</button>`;
+  }).join('');
+  renderAreaLegend();
+}
+
+function renderAreaLegend(){
+  const el=document.getElementById('area-legend');
+  if(!el||!selDong)return;
+  // 현재 동에 있는 평형만 표시
+  const areas=new Set(UNITS[selDong].map(ho=>UNIT_AREA[selDong+' '+ho]).filter(Boolean));
+  if(!areas.size){el.innerHTML='';return;}
+  const chips=Array.from(areas).sort((a,b)=>a-b).map(a=>{
+    const ac=AREA_COLOR[a];
+    return ac?`<span style="display:inline-flex;align-items:center;gap:4px;background:${ac.bg};border:1.5px solid ${ac.border};border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#1e293b">${ac.label}</span>`:'';
+  }).join('');
+  el.innerHTML=`<div style="margin:6px 0 2px;display:flex;flex-wrap:wrap;gap:5px;align-items:center">
+    <span style="font-size:11px;color:#64748b;font-weight:600">평형 :</span>${chips}
+    <span style="font-size:10px;color:#94a3b8;margin-left:4px">· 숫자=점검차수 · 파란숫자=미점검 · 초록=완료</span>
+  </div>`;
+}
+
+function resetUnit(u){
+  showConfirmModal('🔄 세대 초기화', u+' 의 점검 기록을 모두 삭제할까요?', ()=>{
+    records=records.filter(r=>r.unit!==u);
+    if(selDong+' '+selUnit===u){savedRec=null;selUnit='';showFormBody(false);}
+    saveLS();updBadge();renderUnits();renderSessBanner();
+    toast('🗑️ '+u+' 초기화 완료');
+  });
+}
+function pickUnit(ho){
+  selUnit=ho;savedRec=null;
+  fStatus='점검전'; // 최종상태 초기화 (점검전 기본)
+  const u=selDong+' '+ho,recs=records.filter(r=>r.unit===u),last=recs[recs.length-1];
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('f-type').value=nextType(u);
+  document.getElementById('f-insp') && (document.getElementById('f-insp').value='');
+  document.getElementById('f-notes').value='';
+  document.getElementById('f-vac').value=last?last.vacDate||vacMap[u]||'':vacMap[u]||'';
+  renderVacInfo();
+  // 이전 기록 meter 병합
+  if(last&&last.meter){
+    const base=initMtr();
+    for(const n of METERS){base[n].p=(last.meter[n]?.p)||'';base[n].c=(last.meter[n]?.c)||'';}
+    fMeter=base;
+  } else {
+    fMeter=initMtr();
+  }
+  // 이전 사진 불러오기
+  if(last&&last.photos&&last.photos.length){
+    fPhotos=last.photos.map(p=>({id:Date.now()+Math.random(),url:p.url}));
+  } else {
+    fPhotos=[];
+  }
+  renderMtr();renderChks();renderStatus();renderPhotos();renderSelInfo();renderUnits();
+  showFormBody(true);
+  startDraftTimer();
+}
+function showFormBody(show){
+  document.getElementById('form-body').style.display=show?'block':'none';
+  document.getElementById('no-unit').style.display=(!show&&!savedRec)?'block':'none';
+}
+function renderSelInfo(){
+  const el=document.getElementById('sel-info');
+  if(!selUnit){el.innerHTML='';return;}
+  const u=selDong+' '+selUnit,cnt=records.filter(r=>r.unit===u).length;
+  const vd=document.getElementById('f-vac')?.value||vacMap[u]||'';
+  const days=vacDays(vd), months=vacMonths(vd);
+  const tags=[];
+  tags.push(`<span class="tag" style="background:#f3e8ff;color:#7c3aed">${nextType(u)}</span>`);
+  if(days!==null) tags.push(`<span class="tag" style="background:#fef9c3;color:#854d0e">공가 ${days}일 (${months}개월)</span>`);
+  if(cnt>0) tags.push(`<span class="tag" style="background:#eff6ff;color:#1d4ed8">${cnt}회 점검이력</span>`);
+  el.innerHTML=`<div class="sel-info"><span style="font-weight:900;font-size:14px;color:#2563eb">✅ ${u}</span> ${tags.join(' ')}</div>`;
+}
+
+/* ───── 체크 UI ───── */
+let fStatus = '점검전';
+
+function setStatus(st){
+  fStatus = st;
+  const colors = {
+    '점검전':   {bg:'#f1f5f9', bd:'#e2e8f0', fg:'#475569'},
+    '입주가능': {bg:'#f0fdf4', bd:'#86efac', fg:'#15803d'},
+    '입주청소전':{bg:'#eff6ff', bd:'#bfdbfe', fg:'#1d4ed8'},
+    '수리중':   {bg:'#fff7ed', bd:'#fed7aa', fg:'#c2410c'},
+    '하자있음': {bg:'#fef2f2', bd:'#fecaca', fg:'#dc2626'},
+  };
+  const labels = {'점검전':'📋 점검전','입주가능':'✅ 입주가능','입주청소전':'🧹 입주청소전','수리중':'🔧 수리중','하자있음':'🚨 하자있음'};
+  ['점검전','입주가능','입주청소전','수리중','하자있음'].forEach(s=>{
+    const btn = document.getElementById('sbtn-'+s);
+    if(!btn) return;
+    const c = colors[s];
+    if(s===st){
+      btn.style.background = c.bg;
+      btn.style.borderColor = c.bd;
+      btn.style.color = c.fg;
+      btn.style.transform = 'scale(1.03)';
+      btn.style.boxShadow = `0 2px 8px ${c.bd}`;
+    } else {
+      btn.style.background = '#fff';
+      btn.style.borderColor = c.bd;
+      btn.style.color = '#94a3b8';
+      btn.style.transform = '';
+      btn.style.boxShadow = '';
+    }
+  });
+  const sel = document.getElementById('status-selected');
+  if(sel){ const c=colors[st]; sel.textContent='선택됨: '+labels[st]; sel.style.color=c.fg; sel.style.fontWeight='700'; }
+  saveDraft();
+}
+
+function renderStatus(){
+  setStatus(fStatus||'입주가능');
+}
+
+function renderChks(){
+  if(!fChecks||!fChecks['현관및거실']){fChecks=initChk();}
+  const labels={'정상':'✅ 정상','이상':'⚠️ 이상','긴급':'🚨 긴급'};
+  const bgMap={'정상':'#f8fafc','이상':'#fffbf5','긴급':'#fff5f5'};
+  const bdMap={'정상':'#e2e8f0','이상':'#fed7aa','긴급':'#fecaca'};
+  document.getElementById('chk-area').innerHTML=Object.entries(CHKDEF).map(([sec,names])=>`
+    <div style="margin-bottom:14px">
+      <div class="sec-hdr"><span style="font-size:15px">${CHKSEC_ICON[sec]||'🔍'}</span>
+        <span style="font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:.8px;text-transform:uppercase">${sec}</span>
+        <div class="sec-div"></div></div>
+      <div class="chk-grid">${names.map(n=>{
+        const v=fChecks[sec]?.[n]||'정상';
+        return `<div class="chk-row" style="background:${bgMap[v]};border:1.5px solid ${bdMap[v]};border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:5px">
+          <span class="chk-name" style="font-size:11px;color:#374151;font-weight:600;line-height:1.3">${n}</span>
+          <button class="chk-btn ${v}" onclick="cycleChk('${sec}','${n}',this)">${labels[v]}</button>
+        </div>`;
+      }).join('')}</div>
+    </div>`).join('');
+}
+function cycleChk(sec,n,btn){
+  const order=['정상','이상','긴급'];
+  const labels={'정상':'✅ 정상','이상':'⚠️ 이상','긴급':'🚨 긴급'};
+  const bgMap={'정상':'#f8fafc','이상':'#fffbf5','긴급':'#fff5f5'};
+  const bdMap={'정상':'#e2e8f0','이상':'#fed7aa','긴급':'#fecaca'};
+  const cur=fChecks[sec]?.[n]||'정상';
+  const next=order[(order.indexOf(cur)+1)%order.length];
+  if(!fChecks[sec])fChecks[sec]={};
+  fChecks[sec][n]=next;
+  btn.className='chk-btn '+next;
+  btn.textContent=labels[next];
+  const card=btn.closest('.chk-row');
+  if(card){card.style.background=bgMap[next];card.style.borderColor=bdMap[next];}
+  saveDraft();
+}
+function setChk(sec,n,v){if(!fChecks[sec])fChecks[sec]={};fChecks[sec][n]=v;renderChks();}
+
+/* ───── 검침 UI ───── */
+function renderMtr(){
+  if(!fMeter||!fMeter['전기'])fMeter=initMtr();
+  document.getElementById('meter-area').innerHTML=METERS.map(n=>`
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+      <span style="width:44px;font-size:12px;font-weight:700;color:#475569">${n}</span>
+      <input type="number" class="inp" style="flex:1;padding:8px 10px" placeholder="이전" value="${fMeter[n]?.p||''}"
+        oninput="if(!fMeter['${n}'])fMeter['${n}']={p:'',c:''};fMeter['${n}'].p=this.value"/>
+      <span style="color:#94a3b8;font-size:10px;white-space:nowrap">${MUNITS[n]}</span>
+      <input type="number" class="inp" style="flex:1;padding:8px 10px" placeholder="현재" value="${fMeter[n]?.c||''}"
+        oninput="if(!fMeter['${n}'])fMeter['${n}']={p:'',c:''};fMeter['${n}'].c=this.value"/>
+    </div>`).join('');
+}
+
+/* ───── 사진 UI ───── */
+document.getElementById('cam-in').onchange=e=>{readImgs(e.target.files);e.target.value='';};
+document.getElementById('gal-in').onchange=e=>{readImgs(e.target.files);e.target.value='';};
+function readImgs(files){
+  Array.from(files).forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const r=new FileReader();
+    r.onload=e=>{fPhotos.push({id:Date.now()+Math.random(),url:e.target.result});renderPhotos();};
+    r.readAsDataURL(f);
+  });
+}
+function delPhoto(id){fPhotos=fPhotos.filter(p=>p.id!==id);renderPhotos();}
+function renderPhotos(){
+  const el=document.getElementById('photo-area');
+  const notionBtn=document.getElementById('notion-btn-area');
+  const notionStatus=document.getElementById('notion-upload-status');
+  if(!fPhotos.length){
+    el.innerHTML='<div class="no-photo">사진 없음</div>';
+    if(notionBtn){ notionBtn.style.display='none'; }
+    if(notionStatus){ notionStatus.style.display='none'; }
+    return;
+  }
+  el.innerHTML=`<div class="photo-grid">${fPhotos.map((p,i)=>`
+    <div class="photo-item"><img src="${p.url}" onclick="openV('${p.url}')"/>
+    <span class="photo-num">${i+1}</span>
+    <button class="photo-del" onclick="delPhoto('${p.id}')">×</button>
+    </div>`).join('')}</div>`;
+  // 사진 있으면 무조건 Notion 버튼 표시
+  if(notionBtn){ notionBtn.style.display='block'; }
+}
+
+// ── Notion 점검표 사진 업로드 ──
+const NOTION_DB_ID = 'ba8db7fe-0246-4d05-ae90-cfd5d44ff0c1';
+
+// 사진첩에서 추가 선택 후 Notion 저장
+function triggerNotionGallery(){
+  document.getElementById('notion-gal-in').click();
+}
+function addNotionGalleryPhotos(input){
+  if(!input.files.length) return;
+  const statusEl = document.getElementById('notion-upload-status');
+  statusEl.style.display='block'; statusEl.style.color='#94a3b8';
+  statusEl.textContent='사진 불러오는 중...';
+  let loaded=0;
+  const extra=[];
+  Array.from(input.files).forEach(file=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      extra.push({id:Date.now()+Math.random(), url:e.target.result});
+      loaded++;
+      if(loaded===input.files.length){
+        // 기존 fPhotos에 추가
+        fPhotos=[...fPhotos,...extra];
+        renderPhotos();
+        statusEl.textContent=`📸 ${extra.length}장 추가됨. 저장 버튼을 눌러주세요.`;
+        input.value='';
+      }
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+// Notion에 사진 저장 (직접 API)
+async function uploadPhotoToNotion(){
+  const photosToUpload = fPhotos;
+  if(!photosToUpload.length){ toast('📸 사진이 없어요'); return; }
+  if(!selDong||!selUnit){ toast('⚠️ 세대를 먼저 선택해주세요'); return; }
+
+  const statusEl = document.getElementById('notion-upload-status');
+  const btns = document.querySelectorAll('#notion-btn-area button');
+  btns.forEach(b=>b.disabled=true);
+  statusEl.style.display = 'block';
+  statusEl.style.color = '#94a3b8';
+  statusEl.textContent = '⏳ Notion에 저장 중...';
+
+  try {
+    const dong = selDong;
+    const ho = selUnit;
+    const unit = dong + ' ' + ho;
+    const date = document.getElementById('f-date')?.value || new Date().toISOString().slice(0,10);
+    const type = document.getElementById('f-type')?.value || '1차';
+    const notes = document.getElementById('f-notes')?.value || '';
+
+    // Notion API 직접 호출 — 페이지 생성 (사진은 외부 URL 없이 텍스트로 기록)
+    // 사진은 imgbb 같은 곳이 아닌, Notion 페이지 본문에 base64 이미지로 embed할 수 없으므로
+    // 페이지를 만들고 사진 정보(수량, 세대, 날짜)를 텍스트로 기록 + 사진은 iCloud/기기에 보관 안내
+    const NOTION_TOKEN_KEY = 'notion_token';
+    const token = localStorage.getItem(NOTION_TOKEN_KEY);
+
+    if(!token){
+      // 토큰 없으면 입력 받기
+      showNotionTokenInput(()=> uploadPhotoToNotion());
+      btns.forEach(b=>b.disabled=false);
+      return;
+    }
+
+    // 페이지 생성
+    const pageBody = {
+      parent: { database_id: NOTION_DB_ID },
+      properties: {
+        '세대': { title: [{ text: { content: unit } }] },
+        '동': { select: { name: dong } },
+        '호수': { rich_text: [{ text: { content: ho } }] },
+        '점검일': { date: { start: date } },
+        '점검차수': { select: { name: type } },
+        '메모': { rich_text: [{ text: { content: notes || '' } }] },
+        '상태': { select: { name: fStatus || '점검전' } },
+        '사진설명': { rich_text: [{ text: { content: `사진 ${photosToUpload.length}장 첨부` } }] }
+      },
+      children: [
+        { object:'block', type:'heading_2', heading_2:{ rich_text:[{type:'text',text:{content:`📸 ${unit} · ${date} · ${type} 점검사진`}}] } },
+        { object:'block', type:'paragraph', paragraph:{ rich_text:[{type:'text',text:{content:`사진 ${photosToUpload.length}장 | 점검자: ${dong} ${ho} | ${date}`}}] } },
+        { object:'block', type:'divider', divider:{} },
+        { object:'block', type:'paragraph', paragraph:{ rich_text:[{type:'text',text:{content:`⚠️ 사진 파일은 기기(아이폰)에 저장되어 있습니다. 이 페이지는 점검 기록용입니다.`},annotations:{color:'gray'}}] } }
+      ]
+    };
+
+    const res = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28'
+      },
+      body: JSON.stringify(pageBody)
+    });
+
+    if(!res.ok){
+      const err = await res.json();
+      if(res.status===401){ localStorage.removeItem(NOTION_TOKEN_KEY); }
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+
+    statusEl.style.color = '#15803d';
+    statusEl.textContent = `✅ Notion 저장 완료! ${unit} · 사진 ${photosToUpload.length}장`;
+    toast(`📒 Notion에 ${unit} 기록 저장됐어요!`);
+    btns.forEach(b=>b.disabled=false);
+
+  } catch(e) {
+    console.error(e);
+    statusEl.style.color = '#dc2626';
+    statusEl.textContent = '❌ 저장 실패: ' + e.message;
+    btns.forEach(b=>b.disabled=false);
+    toast('❌ Notion 저장 실패: ' + e.message);
+  }
+}
+
+// Notion 토큰 입력 모달
+function showNotionTokenInput(onSave){
+  const old=document.getElementById('notion-token-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='notion-token-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:#fff;border-radius:18px;padding:24px;width:100%;max-width:400px;border-top:5px solid #1e293b">
+    <div style="font-size:16px;font-weight:900;margin-bottom:8px">📒 Notion 연동 설정</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;line-height:1.7">
+      Notion에 저장하려면 <b>Integration Token</b>이 필요해요.<br>
+      notion.so → 설정 → My integrations → 새 integration → Internal → 토큰 복사
+    </div>
+    <input id="notion-token-inp" type="text" placeholder="secret_xxxx..." 
+      style="width:100%;padding:12px;border:2px solid #e2e8f0;border-radius:10px;font-size:13px;box-sizing:border-box;margin-bottom:12px"/>
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('notion-token-modal').remove()"
+        style="flex:1;padding:12px;border-radius:10px;border:2px solid #e2e8f0;background:#fff;font-size:13px;font-weight:700;cursor:pointer">취소</button>
+      <button onclick="saveNotionToken()"
+        style="flex:2;padding:12px;border-radius:10px;border:none;background:#1e293b;color:#fff;font-size:13px;font-weight:700;cursor:pointer">💾 저장 후 연결</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  window._notionTokenCb = onSave;
+}
+function saveNotionToken(){
+  const v = document.getElementById('notion-token-inp')?.value?.trim();
+  if(!v){ toast('토큰을 입력해주세요'); return; }
+  localStorage.setItem('notion_token', v);
+  document.getElementById('notion-token-modal')?.remove();
+  toast('✅ Notion 토큰 저장됨!');
+  if(window._notionTokenCb) window._notionTokenCb();
+}
+/* ───── 저장 ───── */
+async function doSave(){
+  if(!selUnit)return;
+  if(!fMeter||!fMeter['전기'])fMeter=initMtr();
+  const u=selDong+' '+selUnit;
+  const vac=document.getElementById('f-vac').value;
+  const recDate=document.getElementById('f-date').value;
+
+  let finalPhotos = fPhotos.slice();
+
+  const rec={id:Date.now()+'_'+Math.random().toString(36).slice(2),unit:u,
+    date:recDate,type:document.getElementById('f-type').value,
+    inspector:'',status:fStatus||'점검전',
+    checks:{},meter:JSON.parse(JSON.stringify(fMeter)),
+    notes:document.getElementById('f-notes').value,issues:'',
+    vacDate:vac,photos:finalPhotos,savedAt:new Date().toISOString()};
+  records.push(rec);sessIds.add(rec.id);
+  if(vac)vacMap[u]=vac;
+  saveLS();savedRec=rec;fPhotos=[];
+  clearDraft(); stopDraftTimer();
+  renderSaved();renderSessBanner();renderUnits();updBadge();
+  document.getElementById('form-body').style.display='none';
+  document.getElementById('no-unit').style.display='none';
+  toast('✅ 저장 완료!');
+}
+
+/* ───── 저장완료 화면 ───── */
+function renderSaved(){
+  if(!savedRec){document.getElementById('saved-area').innerHTML='';return;}
+  const r=savedRec,sc=SC[r.status]||SC['입주가능'],d=vacDays(r.vacDate),m=vacMonths(r.vacDate);
+  // 사진 미리보기
+  const photos=r.photos||[];
+  const photoHtml=photos.length
+    ?`<div style="margin:12px 0;text-align:left">
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:6px">📸 사진 ${photos.length}장</div>
+        <div class="photo-grid">${photos.map((p,i)=>`
+          <div class="photo-item">
+            <img src="${p.url}" onclick="openV('${p.url}')"/>
+            <span class="photo-num">${i+1}</span>
+            
+          </div>`).join('')}
+        </div>
+      </div>`
+    :'';
+  document.getElementById('saved-area').innerHTML=`
+    <div class="saved-box">
+      <div style="font-size:34px;margin-bottom:8px">✅</div>
+      <div style="font-size:18px;font-weight:900;color:#2563eb;margin-bottom:4px">${r.unit}</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:10px">${r.date} · ${r.type}</div>
+      <span class="sbadge" style="${bsty(r.status)}"><span class="dot" style="background:${sc.fg}"></span>${r.status}</span>
+      ${d!==null?`<div style="margin-top:10px;display:inline-block;background:#fef9c3;color:#854d0e;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700">공가 ${d}일 (${m}개월)</div>`:''}
+      ${r.issues?`<div style="margin-top:10px;font-size:12px;color:#c2410c;font-weight:700">⚠️ ${r.issues}</div>`:''}
+      ${photoHtml}
+      <!-- PDF -->
+      <div class="abox pdf">
+        <div class="abox-ttl pdf">📄 PDF 보고서 저장</div>
+        <div class="abox-desc">점검 결과 + 사진을 PDF로 저장<br>파일명: ${fname(r,'pdf')}</div>
+        <button class="abtn pdf" id="pdf-sv" onclick="askPdfPhotoOptDirect(savedRec,'pdf-sv')">📄 PDF로 저장</button>
+      </div>
+      <!-- 엑셀 -->
+      <div class="abox xls" style="margin-top:8px">
+        <div class="abox-ttl xls">📊 엑셀 저장</div>
+        <div class="abox-desc">이번 세션 전체 기록을 엑셀로 저장</div>
+        <button class="abtn xls" onclick="exportXls('session')">📊 세션 엑셀 저장</button>
+      </div>
+      <div class="row2">
+        <button onclick="nextUnit()">➕ 다음 세대</button>
+        <button class="green" onclick="switchTab('records')">📂 기록 보기</button>
+        <button style="background:#fee2e2;color:#dc2626;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer" onclick="resetUnit('${savedRec.unit}')">🔄 초기화</button>
+      </div>
+      <!-- 삭제 -->
+      <div id="sv-del-area" style="margin-top:10px"></div>
+    </div>`;
+  // 삭제 버튼 렌더
+  renderSavedDelBtn();
+}
+
+function renderSavedDelBtn(confirm=false){
+  const el=document.getElementById('sv-del-area');
+  if(!el||!savedRec)return;
+  if(!confirm){
+    el.innerHTML=`<button onclick="renderSavedDelBtn(true)"
+      style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #fecaca;background:#fff5f5;color:#dc2626;font-size:12px;font-weight:700">
+      🗑️ 이 기록 삭제
+    </button>`;
+  } else {
+    el.innerHTML=`<div class="del-confirm">
+      <div class="del-msg">${savedRec.unit} (${savedRec.type}) 기록을 삭제할까요?</div>
+      <div class="del-row">
+        <button class="del-btn cancel" onclick="renderSavedDelBtn(false)">취소</button>
+        <button class="del-btn ok" onclick="doDeleteSaved()">삭제</button>
+      </div>
+    </div>`;
+  }
+}
+
+function doDeleteSaved(){
+  if(!savedRec)return;
+  records=records.filter(r=>r.id!==savedRec.id);
+  sessIds.delete(savedRec.id);
+  savedRec=null;
+  saveLS();updBadge();renderUnits();renderSessBanner();
+  document.getElementById('saved-area').innerHTML='';
+  document.getElementById('no-unit').style.display='block';
+  renderSelInfo();
+  toast('🗑️ 삭제 완료');
+}
+function nextUnit(){selUnit='';savedRec=null;fPhotos=[];document.getElementById('saved-area').innerHTML='';document.getElementById('no-unit').style.display='block';renderUnits();renderSelInfo();}
+
+/* ───── 세션 배너 ───── */
+function renderSessBanner(){
+  const recs=records.filter(r=>sessIds.has(r.id));
+  const el=document.getElementById('sess-banner');
+  if(!recs.length){el.innerHTML='';return;}
+  const cnt={'입주가능':0,'수리중':0,'하자있음':0,'입주청소전':0};recs.forEach(r=>{if(cnt[r.status]!==undefined)cnt[r.status]++;});
+  el.innerHTML=`<div class="banner">
+    <div class="banner-top"><span class="banner-title">📦 이번 세션 ${recs.length}건</span>
+      <div class="banner-tags">
+        ${cnt.긴급>0?`<span class="btag" style="background:#fef2f2;color:#dc2626">긴급 ${cnt.긴급}</span>`:''}
+        ${cnt['수리중']>0?`<span class="btag" style="background:#fff7ed;color:#c2410c">수리 ${cnt['수리중']}</span>`:''}
+        ${cnt.정상>0?`<span class="btag" style="background:#f0fdf4;color:#15803d">정상 ${cnt.정상}</span>`:''}
+      </div></div>
+    <div class="banner-units">${recs.map(r=>`${r.unit}(${r.type})`).join(' · ')}</div>
+    <button class="banner-btn xls" onclick="exportXls('session')">📊 이번 세션 엑셀 저장</button>
+  </div>`;
+}
+
+/* ───── 기록 탭 ───── */
+let expUnit=null,delUnit=null;
+function renderRecs(){
+  const q=document.getElementById('search').value;
+  const sg=document.getElementById('stat-grid');
+  const _allVac=getAllVacancies(), _vacTotal=Object.keys(_allVac).length;
+  // 점검완료(최신 기록 기준) 세대수
+  const _doneUnits=new Set(records.map(r=>r.unit));
+  const _doneCount=[..._doneUnits].filter(u=>_allVac[u]!==undefined).length;
+  sg.innerHTML=[
+    ['전체',_vacTotal+'세대 중 '+_doneCount+'점검','#2563eb'],
+    ['입주가능',records.filter(r=>r.status==='입주가능').length,'#15803d'],
+    ['수리중',records.filter(r=>r.status==='수리중').length,'#c2410c'],
+    ['하자있음',records.filter(r=>r.status==='하자있음').length,'#dc2626'],
+    ['청소전',records.filter(r=>r.status==='입주청소전').length,'#1d4ed8']]
+    .map(([l,c,col])=>`<div class="stat-card"><div class="stat-num" style="color:${col};font-size:${String(c).length>5?'13px':'18px'}">${c}</div><div class="stat-lbl">${l}</div></div>`).join('');
+  // 세션 배너
+  const srecs=records.filter(r=>sessIds.has(r.id));
+  const rb=document.getElementById('rec-banner');
+  if(srecs.length){
+    const cnt={'입주가능':0,'수리중':0,'하자있음':0,'입주청소전':0};srecs.forEach(r=>{if(cnt[r.status]!==undefined)cnt[r.status]++;});
+    rb.innerHTML=`<div class="banner">
+      <div class="banner-top"><span class="banner-title">📦 이번 세션 ${srecs.length}건</span>
+        <div class="banner-tags">
+          ${cnt.긴급>0?`<span class="btag" style="background:#fef2f2;color:#dc2626">긴급 ${cnt.긴급}</span>`:''}
+          ${cnt['수리중']>0?`<span class="btag" style="background:#fff7ed;color:#c2410c">수리 ${cnt['수리중']}</span>`:''}
+          ${cnt.정상>0?`<span class="btag" style="background:#f0fdf4;color:#15803d">정상 ${cnt.정상}</span>`:''}
+        </div></div>
+      <div class="banner-units">${srecs.map(r=>`${r.unit}(${r.type})`).join(' · ')}</div>
+      <button class="banner-btn xls" onclick="exportXls('session')">📊 이번 세션 엑셀 저장</button>
+    </div>`;
+  }else rb.innerHTML='';
+
+  const groups={};
+  records.filter(r=>!q||r.unit.includes(q)).forEach(r=>{if(!groups[r.unit])groups[r.unit]=[];groups[r.unit].push(r);});
+  const keys=Object.keys(groups).sort();
+  const el=document.getElementById('rec-list');
+  if(!keys.length){el.innerHTML=`<div style="text-align:center;padding:40px 0;color:#94a3b8;font-size:13px">${records.length===0?'아직 점검 기록이 없습니다':'검색 결과 없음'}</div>`;return;}
+
+  el.innerHTML=keys.map(uk=>{
+    const recs=groups[uk],lat=recs[recs.length-1],c=SC[lat.status]||SC['입주가능'];
+    const d=vacDays(lat.vacDate),m=vacMonths(lat.vacDate),inSess=recs.some(r=>sessIds.has(r.id));
+    const isExp=expUnit===uk,isDel=delUnit===uk;
+    let body='';
+    if(isExp){
+      // ── 두 기록 비교: 변경항목 배열 반환 ──
+      function diffRecs(prev,curr){
+        const out=[];
+        // 종합상태
+        if(prev.status!==curr.status){
+          const stLvl={'입주가능':0,'입주청소전':1,'수리중':2,'하자있음':3};
+          const worse=(stLvl[curr.status]??0)>(stLvl[prev.status]??0);
+          out.push({t:worse?'악화':'개선', txt:'종합상태: '+prev.status+' → '+curr.status});
+        }
+        // 체크리스트
+        for(const sec of Object.keys(curr.checks||{})){
+          for(const name of Object.keys((curr.checks[sec])||{})){
+            const pv=((prev.checks||{})[sec]||{})[name]||'정상';
+            const cv=curr.checks[sec][name]||'정상';
+            if(pv!==cv) out.push({t:cv!=='정상'?'악화':'개선', txt:name+': '+pv+' → '+cv});
+          }
+        }
+        // 이상항목 추가/해결
+        const pi=new Set((prev.issues||'').split(',').map(s=>s.replace(/\[.*?\]/g,'').trim()).filter(Boolean));
+        const ci=new Set((curr.issues||'').split(',').map(s=>s.replace(/\[.*?\]/g,'').trim()).filter(Boolean));
+        ci.forEach(i=>{if(!pi.has(i))out.push({t:'추가',txt:'이상 추가: '+i});});
+        pi.forEach(i=>{if(!ci.has(i))out.push({t:'해결',txt:'이상 해결: '+i});});
+        // 계량기
+        for(const n of Object.keys(curr.meter||{})){
+          const pc=((prev.meter||{})[n]||{}).c||'';
+          const cc=(curr.meter[n]||{}).c||'';
+          if(pc&&cc&&pc!==cc) out.push({t:'계량기',txt:n+' 지침: '+pc+' → '+cc});
+        }
+        // 메모(비고)
+        const pn=(prev.notes||'').trim(), cn=(curr.notes||'').trim();
+        if(pn!==cn){
+          if(!pn&&cn)       out.push({t:'메모',txt:'메모 추가: '+cn});
+          else if(pn&&!cn)  out.push({t:'메모',txt:'메모 삭제 (이전: '+pn+')'});
+          else               out.push({t:'메모',txt:'메모 변경: "'+pn+'" → "'+cn+'"'});
+        }
+        return out;
+      }
+
+      function chStyle(t){
+        if(t==='악화'||t==='추가') return {bg:'#fff7ed',bd:'#fed7aa',fg:'#c2410c',icon:'🔺'};
+        if(t==='개선'||t==='해결') return {bg:'#f0fdf4',bd:'#bbf7d0',fg:'#15803d',icon:'✅'};
+        if(t==='메모')             return {bg:'#eff6ff',bd:'#bfdbfe',fg:'#1d4ed8',icon:'📝'};
+        return                            {bg:'#f8fafc',bd:'#e2e8f0',fg:'#475569',icon:'📊'};
+      }
+
+      // ── 최신 변경 요약 박스 (2회 이상) ──
+      let diffBox='';
+      if(recs.length>=2){
+        const changes=diffRecs(recs[recs.length-2],lat);
+        if(changes.length){
+          const worse=changes.filter(c=>c.t==='악화'||c.t==='추가');
+          const better=changes.filter(c=>c.t==='개선'||c.t==='해결');
+          const other=changes.filter(c=>c.t==='메모'||c.t==='계량기');
+          const hdr=worse.length?'🔺 변경사항 있음 (악화/추가 '+worse.length+'건)':
+                    better.length?'✅ 변경사항 있음 (개선/해결 '+better.length+'건)':
+                    '📋 변경사항 있음';
+          const hdrBg=worse.length?'#fff7ed':better.length?'#f0fdf4':'#eff6ff';
+          const hdrFg=worse.length?'#c2410c':better.length?'#15803d':'#1d4ed8';
+          diffBox=`<div style="border-radius:10px;border:1.5px solid ${hdrFg}33;overflow:hidden;margin-bottom:10px">
+            <div style="background:${hdrBg};padding:7px 12px;font-size:11px;font-weight:800;color:${hdrFg}">${hdr}</div>
+            <div style="padding:8px 10px;display:flex;flex-direction:column;gap:4px;background:#fff">
+              ${changes.map(ch=>{const s=chStyle(ch.t);return`<div style="font-size:11px;background:${s.bg};border:1px solid ${s.bd};color:${s.fg};border-radius:6px;padding:4px 8px;font-weight:700">${s.icon} ${ch.txt}</div>`;}).join('')}
+            </div>
+          </div>`;
+        }
+      }
+
+      // ── 타임라인 ──
+      const tl=recs.length>1?`<div style="font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:6px">🕐 점검 이력</div>
+        <div class="tl-wrap">${recs.map((r,i)=>{
+          const rc=SC[r.status]||SC['입주가능'];
+          const chgs=i>0?diffRecs(recs[i-1],r):[];
+          const badge=chgs.length?`<span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px;font-weight:800;margin-left:4px">변경 ${chgs.length}</span>`:'';
+          return`<div class="tl-item">
+            <div class="tl-badge">
+              <div class="tl-type" style="background:${rc.bg};border:1.5px solid ${rc.bd};color:${rc.fg}">${r.type}${badge}</div>
+              <div class="tl-date">${r.date}</div>
+              <div style="font-size:9px;color:${rc.fg};font-weight:700">${r.status}</div>
+            </div>
+            ${i<recs.length-1?'<div class="tl-line"></div>':''}
+          </div>`;}).join('')}</div>`:'';
+
+      const ph=lat.photos||[];
+      const thumbs=ph.length?`<div class="thumb-row">${ph.map(p=>`<img class="thumb" src="${p.url}" onclick="openV('${p.url}')"/>`).join('')}</div>`:'';
+      const acts=isDel?`<div class="del-confirm"><div class="del-msg">${uk} 기록 ${recs.length}건을 삭제할까요?</div>
+        <div class="del-row"><button class="del-btn cancel" onclick="cancelDel()">취소</button>
+        <button class="del-btn ok" onclick="doDel('${uk}')">삭제</button></div></div>`
+        :`<div class="rec-actions">
+          <button class="rec-btn add" onclick="goAdd('${uk}')">✏️ 추가</button>
+          <button class="rec-btn pdf" onclick="askPdfPhotoOpt('${uk}',this)">📄 PDF</button>
+          <button class="rec-btn del" onclick="askDel('${uk}')">🗑️ 삭제</button>
+        </div>`;
+      body=`<div class="rec-body">
+        ${diffBox}
+        ${tl}
+        ${d!==null?`<div class="vac-tag">공가 ${d}일 (${m}개월)</div>`:''}
+        ${lat.issues?`<div class="issue-txt">⚠️ ${lat.issues}</div>`:''}
+        ${lat.notes?`<div class="notes-txt">📝 ${lat.notes}</div>`:''}
+        ${thumbs}${acts}</div>`;
+    }
+    return`<div class="rec-card${inSess?' sess':''}">
+      <button class="rec-hdr" onclick="toggleExp('${uk}')">
+        <span class="rec-dot" style="background:${c.fg}"></span>
+        <span class="rec-unit">${uk}</span>
+        ${recs.length>1?`<span class="rec-cnt">${recs.length}회</span>`:''}
+        ${recs.some(r=>r.photos?.length)?'<span style="font-size:13px">📸</span>':''}
+        <span class="rec-date">${lat.date}</span>
+        <span class="sbadge" style="${bsty(lat.status)};font-size:10px"><span class="dot" style="background:${c.fg}"></span>${lat.status}</span>
+      </button>${body}</div>`;
+  }).join('');
+}
+function toggleExp(u){expUnit=expUnit===u?null:u;delUnit=null;renderRecs();}
+function askDel(u){delUnit=u;renderRecs();}
+function cancelDel(){delUnit=null;renderRecs();}
+function doDel(u){
+  const ids=records.filter(r=>r.unit===u).map(r=>r.id);
+  records=records.filter(r=>r.unit!==u);ids.forEach(id=>sessIds.delete(id));
+  delUnit=null;expUnit=null;saveLS();updBadge();renderRecs();toast('🗑️ 삭제 완료');
+}
+function getLatest(u){return records.filter(r=>r.unit===u).slice(-1)[0];}
+function goAdd(uk){
+  selDong=uk.split(' ')[0];
+  // 저장완료 화면 초기화
+  savedRec=null;
+  document.getElementById('saved-area').innerHTML='';
+  switchTab('form');
+  renderDongs();
+  pickUnit(uk.split(' ')[1]);
+}
+
+/* ───── 뷰어 ───── */
+function openV(src){document.getElementById('viewer-img').src=src;document.getElementById('viewer').style.display='flex';}
+function closeViewer(){document.getElementById('viewer').style.display='none';}
+
+/* ───── PDF ───── */
+function askPdfPhotoOptDirect(rec, btnId){
+  if(!rec) return;
+  const hasPhotos = rec.photos && rec.photos.length > 0;
+  if(!hasPhotos){ savePDF(rec, btnId, false); return; }
+  showConfirmModal(
+    '📄 PDF 저장 옵션',
+    `<div style="font-size:13px;color:#475569;margin-bottom:14px">${rec.unit} · 사진 ${rec.photos.length}장</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="closeModal();savePDF(savedRec,'${btnId}',true)" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+        📸 사진 포함 저장
+      </button>
+      <button onclick="closeModal();savePDF(savedRec,'${btnId}',false)" style="background:#f1f5f9;color:#1e293b;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+        📄 사진 제외 저장 (가볍게)
+      </button>
+    </div>`,
+    null
+  );
+}
+
+function askPdfPhotoOpt(uk, btn){
+  const rec = getLatest(uk);
+  if(!rec) return;
+  const hasPhotos = rec.photos && rec.photos.length > 0;
+  if(!hasPhotos){
+    // 사진 없으면 바로 저장
+    savePDFWithBtn(rec, btn, false);
+    return;
+  }
+  // 사진 있을 때만 선택 팝업
+  showConfirmModal(
+    '📄 PDF 저장 옵션',
+    `<div style="font-size:13px;color:#475569;margin-bottom:14px">${uk} · 사진 ${rec.photos.length}장</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="closeModal();savePDFWithBtn(getLatest('${uk}'),null,true)" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+        📸 사진 포함 저장
+      </button>
+      <button onclick="closeModal();savePDFWithBtn(getLatest('${uk}'),null,false)" style="background:#f1f5f9;color:#1e293b;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">
+        📄 사진 제외 저장 (가볍게)
+      </button>
+    </div>`,
+    null
+  );
+}
+
+function savePDFFromRec(uk,btn){
+  const rec=getLatest(uk);
+  if(!rec)return;
+  savePDFWithBtn(rec,btn);
+}
+async function savePDFWithBtn(rec,btn,withPhoto=true){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+  overlay.innerHTML='<div style="width:52px;height:52px;border:5px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></div>'
+    +'<div style="color:#fff;font-size:15px;font-weight:700">PDF 생성 중...</div>';
+  document.body.appendChild(overlay);
+  if(btn){btn.textContent='⏳';btn.disabled=true;}
+  await new Promise(r=>setTimeout(r,50));
+  try{
+    const doc=await buildPDF(rec,withPhoto);
+    const pdfBlob=doc.output('blob');
+    const url=URL.createObjectURL(pdfBlob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fname(rec,'pdf');
+    a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
+    document.body.removeChild(overlay);
+    if(btn){btn.textContent='✅';btn.disabled=false;setTimeout(()=>{if(btn){btn.textContent='📄 PDF';btn.disabled=false;}},3000);}
+    toast('📄 PDF 저장 완료!');
+  }catch(e){
+    console.error(e);
+    document.body.removeChild(overlay);
+    if(btn){btn.textContent='❌';btn.disabled=false;setTimeout(()=>{btn.textContent='📄 PDF';btn.disabled=false;},3000);}
+    toast('❌ PDF 오류: '+e.message);
+  }
+}
+async function savePDF(rec,btnId,withPhoto=true){
+  if(!rec)return;
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+  overlay.innerHTML='<div style="width:52px;height:52px;border:5px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></div>'
+    +'<div style="color:#fff;font-size:15px;font-weight:700">PDF 생성 중...</div>'
+    +'<style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+  document.body.appendChild(overlay);
+  const btn=document.getElementById(btnId);
+  if(btn){btn.textContent='⏳ 생성 중...';btn.disabled=true;}
+  await new Promise(r=>setTimeout(r,50));
+  try{
+    const doc=await buildPDF(rec,withPhoto);
+    const pdfBlob=doc.output('blob');
+    const url=URL.createObjectURL(pdfBlob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fname(rec,'pdf');
+    a.style.display='none';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
+    document.body.removeChild(overlay);
+    if(btn){btn.textContent='✅ 저장 완료!';btn.disabled=false;setTimeout(()=>{if(btn){btn.textContent='📄 PDF로 저장';btn.disabled=false;}},4000);}
+    toast('📄 PDF 저장 완료'+(withPhoto?'':'(사진 제외)')+'!');
+  }catch(e){
+    console.error(e);
+    document.body.removeChild(overlay);
+    if(btn){btn.textContent='❌ 오류';btn.disabled=false;setTimeout(()=>{if(btn){btn.textContent='📄 PDF';btn.disabled=false;}},3000);}
+    toast('❌ PDF 생성 오류: '+e.message);
+  }
+}
+async function buildPDF(rec,withPhoto=true){
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const M=10,CW=190;let y=M;
+  function ci(cv,mb=1,dw=CW){const dh=dw*(cv.height/cv.width);if(y+dh>287){doc.addPage();y=M;}doc.addImage(cv.toDataURL('image/png'),'PNG',M,y,dw,dh);y+=dh+mb;}
+  function mk(lines,{fs=11,lh,bg='#fff',fg='#1e293b',bold=false,pad=5,border=null}={}){
+    const LH=lh||fs*1.5,cw=740;
+    const c=document.createElement('canvas');c.width=cw;c.height=lines.length*LH+pad*2;
+    const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,cw,c.height);
+    if(border){x.strokeStyle=border;x.lineWidth=1;x.strokeRect(0,0,cw,c.height);}
+    x.fillStyle=fg;x.font=(bold?'bold ':'')+fs+'px Arial,sans-serif';
+    lines.forEach((l,i)=>x.fillText(String(l||''),pad,pad+fs+i*LH));return c;
+  }
+  // 헤더 — 한 줄 압축
+  const hc=document.createElement('canvas');hc.width=740;hc.height=46;
+  const hx=hc.getContext('2d');hx.fillStyle='#ffffff';hx.fillRect(0,0,740,46);
+  hx.strokeStyle='#1e293b';hx.lineWidth=2;hx.strokeRect(1,1,738,44);
+  hx.fillStyle='#1e293b';hx.font='bold 20px Arial,sans-serif';hx.fillText('LH 공가점검 보고서',14,22);
+  hx.fillStyle='#475569';hx.font='12px Arial,sans-serif';hx.fillText('양주율정마을 7단지  ·  LH공가점검',14,38);
+  ci(hc,3);
+  // 기본 정보 — 가로 압축
+  const ic=document.createElement('canvas');ic.width=740;ic.height=52;
+  const ix=ic.getContext('2d');ix.fillStyle='#ffffff';ix.fillRect(0,0,740,52);
+  ix.strokeStyle='#cbd5e1';ix.lineWidth=1.5;ix.strokeRect(1,1,738,50);
+  ix.fillStyle='#1e293b';ix.font='bold 18px Arial,sans-serif';ix.fillText(rec.unit,14,22);
+  ix.fillStyle='#1e293b';ix.font='bold 13px Arial,sans-serif';ix.fillText('● '+(rec.status||'점검전'),14,40);
+  ix.fillStyle='#475569';ix.font='12px Arial,sans-serif';
+  ix.fillText('점검일: '+rec.date+'   차수: '+rec.type,300,22);
+  if(rec.vacDate){const d=vacDays(rec.vacDate),m=vacMonths(rec.vacDate);ix.fillText('공가: '+rec.vacDate+(d!==null?' ('+d+'일/'+m+'개월)':''),300,40);}
+  ci(ic,2);
+  // 점검항목
+  ci(mk(['▣  점검 항목'],{fs:11,bold:true,border:'#1e293b'}),1);
+  const checks = rec.checks || {};
+  if(Object.keys(checks).length > 0){
+    for(const[sec,its]of Object.entries(checks)){
+      if(!its || typeof its !== 'object') continue;
+      ci(mk([' '+sec],{fs:10,bold:true,border:'#cbd5e1',pad:4}),0);
+      const ns=Object.keys(its);
+      for(let i=0;i<ns.length;i+=2){
+        const lN=ns[i],rN=ns[i+1]||'',lV=its[lN]||'정상',rV=rN?its[rN]||'정상':'';
+        const rc2=document.createElement('canvas');rc2.width=740;rc2.height=22;
+        const rx=rc2.getContext('2d');rx.fillStyle='#ffffff';rx.fillRect(0,0,740,22);
+        rx.strokeStyle='#e2e8f0';rx.lineWidth=1;rx.strokeRect(0,0,740,22);
+        rx.fillStyle='#1e293b';rx.font='11px Arial,sans-serif';rx.fillText(lN,10,15);
+        const isBad=lV==='이상'||lV==='긴급';
+        rx.font=(isBad?'bold ':'')+'11px Arial,sans-serif';rx.fillText(lV+(isBad?' ⚠':''),200,15);
+        if(rN){
+          rx.font='11px Arial,sans-serif';rx.fillText(rN,390,15);
+          const isBad2=rV==='이상'||rV==='긴급';
+          rx.font=(isBad2?'bold ':'')+'11px Arial,sans-serif';rx.fillText(rV+(isBad2?' ⚠':''),580,15);
+        }
+        ci(rc2,0);
+      }y+=1;
+    }
+  } else {
+    ci(mk(['  점검항목 입력 없음'],{fs:11,fg:'#94a3b8'}),2);
+  }
+  if(rec.issues){y+=1;ci(mk(['⚠  이상항목: '+rec.issues],{fs:11,bold:true,border:'#cbd5e1'}),2);}
+  if(rec.notes){y+=1;ci(mk(['비고: '+rec.notes],{fs:11,border:'#e2e8f0'}),2);}
+  const me=Object.entries(rec.meter||{}).filter(([,v])=>v.p||v.c);
+  if(me.length){y+=1;ci(mk(['▣  검침값'],{fs:11,bold:true,border:'#1e293b'}),1);me.forEach(([n,{p,c}])=>ci(mk([n+'  이전: '+(p||'-')+'  →  현재: '+(c||'-')],{fs:11,border:'#e2e8f0',pad:4}),0));}
+  // 사진
+  if(withPhoto && rec.photos?.length){
+    y+=2;ci(mk(['▣  점검사진 ('+rec.photos.length+'장)'],{fs:11,bold:true,border:'#1e293b'}),2);
+    const COLS=2,GAP=3,PW=(CW-(COLS-1)*GAP)/COLS,SZ=300;
+    const li=src=>new Promise(r=>{const img=new Image();img.onload=()=>r(img);img.onerror=()=>r(null);img.src=src;});
+    for(let i=0;i<rec.photos.length;i+=COLS){
+      const row=rec.photos.slice(i,i+COLS),imgs=await Promise.all(row.map(p=>li(p.url)));
+      if(y+PW>285){doc.addPage();y=M;}
+      for(let j=0;j<row.length;j++){
+        const img=imgs[j];if(!img)continue;
+        const cc=document.createElement('canvas');cc.width=SZ;cc.height=SZ;
+        const cx=cc.getContext('2d');const sc=Math.max(SZ/img.width,SZ/img.height);
+        cx.drawImage(img,-(img.width*sc-SZ)/2,-(img.height*sc-SZ)/2,img.width*sc,img.height*sc);
+        cx.fillStyle='rgba(0,0,0,.55)';cx.fillRect(8,SZ-26,26,18);cx.fillStyle='#fff';cx.font='bold 13px Arial';cx.fillText(String(i+j+1),14,SZ-12);
+        doc.addImage(cc.toDataURL('image/png'),'PNG',M+j*(PW+GAP),y,PW,PW);
+      }y+=PW+GAP;
+    }
+  }
+  const tot=doc.internal.getNumberOfPages(),ts=new Date().toLocaleString('ko-KR');
+  for(let i=1;i<=tot;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(160,160,160);doc.text('LH 공가점검 앱  ·  '+ts+'  ('+i+'/'+tot+')',M,292);}
+  doc.setTextColor(0,0,0);return doc;
+}
+
+/* ───── 빈 점검표 인쇄 ───── */
+let _blankDong = '전체', _blankQr = true;
+
+let _blankUnits = []; // 특정 세대 목록
+function setBlankDong(dong, btn){
+  _blankDong = dong;
+  document.querySelectorAll('#blank-dong-btns .period-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const panel = document.getElementById('blank-unit-panel');
+  if(dong==='특정세대'){
+    panel.style.display='block';
+    // 동 select 채우기
+    const ds = document.getElementById('blank-unit-dong');
+    ds.innerHTML='<option value="">동 선택</option>'+Object.keys(BLDS).map(d=>`<option value="${d}">${d}</option>`).join('');
+  } else {
+    panel.style.display='none';
+  }
+}
+function updateBlankUnitHo(){
+  const dong = document.getElementById('blank-unit-dong').value;
+  const hs = document.getElementById('blank-unit-ho');
+  if(!dong){ hs.innerHTML='<option value="">호수 선택</option>'; return; }
+  const allVac = getAllVacancies();
+  const hos = Object.keys(allVac).filter(u=>u.startsWith(dong)).map(u=>u.split(' ')[1]);
+  hs.innerHTML='<option value="">호수 선택</option>'+hos.map(h=>`<option value="${h}">${h}</option>`).join('');
+}
+function addBlankUnit(){
+  const dong = document.getElementById('blank-unit-dong').value;
+  const ho = document.getElementById('blank-unit-ho').value;
+  if(!dong||!ho){ toast('동·호수를 선택해주세요'); return; }
+  const unit = dong+' '+ho;
+  if(_blankUnits.includes(unit)){ toast('이미 추가된 세대예요'); return; }
+  _blankUnits.push(unit);
+  renderBlankUnitList();
+}
+function removeBlankUnit(unit){
+  _blankUnits = _blankUnits.filter(u=>u!==unit);
+  renderBlankUnitList();
+}
+function renderBlankUnitList(){
+  const el = document.getElementById('blank-unit-list');
+  el.innerHTML = _blankUnits.map(u=>`
+    <span style="background:#fef9c3;border:1.5px solid #f59e0b;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px">
+      ${u}
+      <button onclick="removeBlankUnit('${u}')" style="background:none;border:none;color:#dc2626;font-size:13px;cursor:pointer;padding:0;line-height:1">✕</button>
+    </span>`).join('');
+}
+function setBlankQr(val, btn){
+  _blankQr = val;
+  document.getElementById('blank-qr-yes').classList.toggle('on', val);
+  document.getElementById('blank-qr-no').classList.toggle('on', !val);
+}
+
+// QR코드를 canvas로 생성 (PC/모바일 모두 호환)
+async function makeQRCanvas(text, size=120){
+  if(window._qrCache && window._qrCache[text]) return window._qrCache[text];
+  return new Promise((resolve)=>{
+    if(typeof QRCode === 'undefined'){ resolve(null); return; }
+    if(!window._qrCache) window._qrCache={};
+    let done=false;
+    const div=document.createElement('div');
+    div.style.cssText='position:fixed;left:-9999px;top:-9999px;width:'+size+'px;height:'+size+'px';
+    document.body.appendChild(div);
+    const failTimer=setTimeout(()=>{ if(!done){done=true;try{document.body.removeChild(div);}catch(e){}resolve(null);} },1500);
+    try{
+      new QRCode(div,{text,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});
+      setTimeout(()=>{
+        if(done)return; done=true; clearTimeout(failTimer);
+        try{
+          const canvas=div.querySelector('canvas'), img=div.querySelector('img');
+          const out=document.createElement('canvas'); out.width=size; out.height=size;
+          const ctx=out.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,size,size);
+          if(canvas){ ctx.drawImage(canvas,0,0,size,size); try{document.body.removeChild(div);}catch(e){} window._qrCache[text]=out; resolve(out); }
+          else if(img&&img.src){ const i=new Image(); i.onload=()=>{ctx.drawImage(i,0,0,size,size);try{document.body.removeChild(div);}catch(e){}window._qrCache[text]=out;resolve(out);}; i.onerror=()=>{try{document.body.removeChild(div);}catch(e){}resolve(null);}; i.src=img.src; }
+          else{ try{document.body.removeChild(div);}catch(e){} resolve(null); }
+        }catch(e2){try{document.body.removeChild(div);}catch(e3){}resolve(null);}
+      },400);
+    }catch(e){clearTimeout(failTimer);try{document.body.removeChild(div);}catch(e2){}resolve(null);}
+  });
+}
+
+async function exportBlankForm(){
+  const btn=document.getElementById('btn-blank-pdf');
+  const APP_URL=window.location.href.split('?')[0];
+  let targets=[];
+  if(_blankDong==='전체'){
+    const allVac=getAllVacancies();
+    for(const u of Object.keys(allVac)){const[d,h]=u.split(' ');targets.push({dong:d,unit:u,ho:h});}
+  } else if(_blankDong==='특정세대'){
+    if(!_blankUnits.length){ toast('⚠️ 특정 세대를 먼저 추가해주세요'); btn.textContent='📋 빈 점검표 PDF 저장'; btn.disabled=false; return; }
+    for(const u of _blankUnits){const[d,h]=u.split(' ');targets.push({dong:d,unit:u,ho:h});}
+  } else {
+    const allVac=getAllVacancies();
+    for(const u of Object.keys(allVac)){if(u.startsWith(_blankDong)){const[d,h]=u.split(' ');targets.push({dong:d,unit:u,ho:h});}}
+  }
+  if(!targets.length){ targets=[{dong:'',unit:'',ho:''}]; }
+
+  // 세대 많으면 QR 자동 제외 확인
+  let useQr=_blankQr;
+  if(targets.length>20 && _blankQr){
+    const ok=confirm(`⚠️ ${targets.length}개 세대를 생성합니다.\nQR코드 포함 시 매우 느려요.\n\n확인 = QR 제외하고 빠르게 생성\n취소 = 중단`);
+    if(!ok){ return; }
+    useQr=false;
+  }
+
+  btn.textContent='⏳ 생성 중...'; btn.disabled=true;
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,0.7);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+  const progEl=document.createElement('div');
+  progEl.style.cssText='color:#fff;font-size:16px;font-weight:800;text-align:center;line-height:1.6';
+  progEl.textContent='빈 양식 생성 중...';
+  overlay.innerHTML='<div style="width:52px;height:52px;border:5px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></div>';
+  overlay.appendChild(progEl);
+  document.body.appendChild(overlay);
+  await new Promise(r=>setTimeout(r,60));
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    let first=true;
+    for(let i=0;i<targets.length;i++){
+      if(!first) doc.addPage();
+      first=false;
+      progEl.textContent=targets.length>1?`생성 중... ${i+1} / ${targets.length}`:'빈 양식 생성 중...';
+      await buildBlankPage(doc,targets[i],APP_URL,useQr);
+      if(i%3===2) await new Promise(r=>setTimeout(r,5));
+    }
+    const fname=`LH빈점검표_${_blankDong}_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}`;
+    doc.save(fname+'.pdf');
+    toast('📋 빈 점검표 저장 완료!');
+  }catch(e){
+    console.error(e); toast('❌ 오류: '+e.message);
+  }finally{
+    document.body.removeChild(overlay);
+    btn.textContent='📋 빈 점검표 PDF 저장'; btn.disabled=false;
+  }
+}
+
+async function buildBlankPage(doc, {dong, unit, ho}, appUrl, useQr=_blankQr){
+  const M=14, CW=182; let y=M;
+  const W=210;
+
+  function mkC(lines, {fs=12,lh,bg='#fff',fg='#1e293b',bold=false,pad=8,align='left',border=null}={}){
+    const LH=lh||fs*1.6, cw=740;
+    const c=document.createElement('canvas'); c.width=cw; c.height=lines.length*LH+pad*2;
+    const x=c.getContext('2d');
+    x.fillStyle=bg; x.fillRect(0,0,cw,c.height);
+    if(border){x.strokeStyle=border;x.lineWidth=2;x.strokeRect(1,1,cw-2,c.height-2);}
+    x.fillStyle=fg; x.font=(bold?'bold ':'')+fs+'px Arial,sans-serif';
+    lines.forEach((l,i)=>{
+      if(align==='center') x.textAlign='center', x.fillText(String(l||''),cw/2,pad+fs+i*LH);
+      else x.fillText(String(l||''),pad,pad+fs+i*LH);
+    });
+    return c;
+  }
+  function ci(cv,mb=2,dw=CW){const dh=dw*(cv.height/cv.width);if(y+dh>285){doc.addPage();y=M;}doc.addImage(cv.toDataURL('image/png'),'PNG',M,y,dw,dh);y+=dh+mb;}
+
+  // ── 헤더 ──
+  const hc=document.createElement('canvas'); hc.width=740; hc.height=70;
+  const hx=hc.getContext('2d');
+  hx.fillStyle='#ffffff'; hx.fillRect(0,0,740,70);
+  hx.strokeStyle='#1e293b'; hx.lineWidth=2; hx.strokeRect(1,1,738,68);
+  hx.fillStyle='#1e293b'; hx.font='bold 24px Arial,sans-serif'; hx.textAlign='center';
+  hx.fillText('입주 전 세대 최종 점검표',370,30);
+  hx.fillStyle='#475569'; hx.font='13px Arial,sans-serif';
+  hx.fillText('양주율정마을 7단지  ·  LH공가점검',370,52);
+  ci(hc,4);
+
+  // ── 기본 정보 ──
+  const ic=document.createElement('canvas'); ic.width=740; ic.height=72;
+  const ix=ic.getContext('2d');
+  ix.fillStyle='#f8fafc'; ix.fillRect(0,0,740,72);
+  ix.strokeStyle='#cbd5e1'; ix.lineWidth=1.5; ix.strokeRect(1,1,738,70);
+  // 단지명
+  ix.fillStyle='#64748b'; ix.font='11px Arial'; ix.fillText('단  지  명',14,18);
+  ix.fillStyle='#1e293b'; ix.font='bold 13px Arial'; ix.fillText('율정마을 7단지',14,36);
+  // 구분선
+  ix.strokeStyle='#e2e8f0'; ix.beginPath(); ix.moveTo(200,8); ix.lineTo(200,64); ix.stroke();
+  // 점검일시
+  ix.fillStyle='#64748b'; ix.font='11px Arial'; ix.fillText('점 검 일 시',210,18);
+  ix.fillStyle='#1e293b'; ix.font='13px Arial'; ix.fillText('2026.          .          .',210,38);
+  // 구분선
+  ix.strokeStyle='#e2e8f0'; ix.beginPath(); ix.moveTo(480,8); ix.lineTo(480,64); ix.stroke();
+  // 세대번호
+  ix.fillStyle='#64748b'; ix.font='11px Arial'; ix.fillText('세 대 번 호',490,18);
+  ix.fillStyle='#1e293b'; ix.font='bold 14px Arial';
+  ix.fillText(unit || '          동          호',490,38);
+  ci(ic,3);
+
+  // 점검자
+  const pc=document.createElement('canvas'); pc.width=740; pc.height=44;
+  const px=pc.getContext('2d');
+  px.fillStyle='#f8fafc'; px.fillRect(0,0,740,44);
+  px.strokeStyle='#cbd5e1'; px.lineWidth=1.5; px.strokeRect(1,1,738,42);
+  px.fillStyle='#64748b'; px.font='11px Arial'; px.fillText('점  검  자',14,16);
+  px.fillStyle='#1e293b'; px.font='13px Arial'; px.fillText('                                        (서명)',14,34);
+  ci(pc,4);
+
+  // ── 점검 항목 ──
+  const thc=document.createElement('canvas'); thc.width=740; thc.height=32;
+  const thx=thc.getContext('2d');
+  thx.fillStyle='#e2e8f0'; thx.fillRect(0,0,740,32);
+  thx.strokeStyle='#94a3b8'; thx.lineWidth=1; thx.strokeRect(0,0,740,32);
+  thx.fillStyle='#1e293b'; thx.font='bold 13px Arial';
+  thx.fillText('구분',14,22); thx.fillText('점 검 항 목',120,22);
+  thx.fillText('확인',570,22); thx.fillText('비 고',640,22);
+  ci(thc,0);
+
+  let rowIdx=0;
+  for(const [sec,items] of Object.entries(CHKDEF)){
+    // 구분 헤더
+    const sc=document.createElement('canvas'); sc.width=740; sc.height=28;
+    const sx=sc.getContext('2d');
+    sx.fillStyle='#f1f5f9'; sx.fillRect(0,0,740,28);
+    sx.strokeStyle='#cbd5e1'; sx.lineWidth=1; sx.strokeRect(0,0,740,28);
+    sx.fillStyle='#374151'; sx.font='bold 12px Arial';
+    sx.fillText(`${CHKSEC_ICON[sec]||''} ${sec.replace('및','·')}`,14,20);
+    ci(sc,0);
+
+    for(const item of items){
+      const desc = CHKDESC[item]||item;
+      const rc=document.createElement('canvas'); rc.width=740; rc.height=36;
+      const rx=rc.getContext('2d');
+      rx.fillStyle=rowIdx%2===0?'#ffffff':'#f8fafc'; rx.fillRect(0,0,740,36);
+      rx.strokeStyle='#e2e8f0'; rx.lineWidth=1; rx.strokeRect(0,0,740,36);
+      // 구분(빈칸)
+      rx.fillStyle='#94a3b8'; rx.font='11px Arial'; rx.fillText(sec.replace('및','·').slice(0,4),8,22);
+      // 항목명 굵게
+      rx.fillStyle='#1e293b'; rx.font='bold 12px Arial'; rx.fillText(item,115,16);
+      // 설명 작게
+      rx.fillStyle='#64748b'; rx.font='11px Arial'; rx.fillText(desc,115,30);
+      // 체크박스
+      rx.strokeStyle='#475569'; rx.lineWidth=1.5; rx.strokeRect(572,8,20,20);
+      // 비고란
+      rx.strokeStyle='#e2e8f0'; rx.lineWidth=1; rx.beginPath(); rx.moveTo(610,0); rx.lineTo(610,36); rx.stroke();
+      ci(rc,0); rowIdx++;
+    }
+  }
+  y+=2;
+
+  // ── 최종 판정 ──
+  const fc=document.createElement('canvas'); fc.width=740; fc.height=44;
+  const fx=fc.getContext('2d');
+  fx.fillStyle='#fef9c3'; fx.fillRect(0,0,740,44);
+  fx.strokeStyle='#fde047'; fx.lineWidth=2; fx.strokeRect(1,1,738,42);
+  fx.fillStyle='#854d0e'; fx.font='bold 13px Arial'; fx.fillText('최 종 판 정',14,20);
+  fx.strokeStyle='#475569'; fx.lineWidth=1.5;
+  fx.strokeRect(150,10,20,20); fx.fillStyle='#1e293b'; fx.font='13px Arial'; fx.fillText('입주 가능',178,24);
+  fx.strokeRect(310,10,20,20); fx.fillText('보수 필요',338,24);
+  ci(fc,3);
+
+  // ── 특이사항 ──
+  const nc=document.createElement('canvas'); nc.width=740; nc.height=60;
+  const nx=nc.getContext('2d');
+  nx.fillStyle='#f8fafc'; nx.fillRect(0,0,740,60);
+  nx.strokeStyle='#cbd5e1'; nx.lineWidth=1.5; nx.strokeRect(1,1,738,58);
+  nx.fillStyle='#475569'; nx.font='bold 12px Arial'; nx.fillText('특이사항',14,18);
+  nx.fillStyle='#94a3b8'; nx.font='11px Arial'; nx.fillText('※ 점검 완료 후 제출하시기 바랍니다.',14,50);
+  ci(nc,4);
+
+  // ── QR코드 (헤더 우측 상단 고정, 18mm 작게) ──
+  if(useQr){
+    const qrUrl = unit ? `${appUrl}?dong=${encodeURIComponent(dong)}&unit=${encodeURIComponent(ho)}` : appUrl;
+    const qrCanvas = await makeQRCanvas(qrUrl, 120);
+    if(qrCanvas){
+      const qrSize = 18;
+      doc.addImage(qrCanvas.toDataURL('image/png'),'PNG', M+CW-qrSize, M, qrSize, qrSize);
+    }
+  }
+
+  // ── 페이지 번호 ──
+  doc.setFontSize(8); doc.setTextColor(160,160,160);
+  doc.text('LH 공가점검 앱  ·  양주율정마을 7단지',M,292);
+  doc.setTextColor(0,0,0);
+}
+
+/* ───── 엑셀 기간 필터 ───── */
+let xlsPeriod='all';
+function setPeriod(val,btn){
+  xlsPeriod=val;
+  document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const cr=document.getElementById('custom-range');
+  cr.style.display=val==='custom'?'flex':'none';
+  updateXlsPreview();
+}
+function getFilteredRecs(){
+  const today=new Date(); today.setHours(0,0,0,0);
+  if(xlsPeriod==='all') return records;
+  if(xlsPeriod==='today'){
+    const t=today.toISOString().slice(0,10);
+    return records.filter(r=>r.date===t);
+  }
+  if(xlsPeriod==='week'){
+    const dow=today.getDay();
+    const mon=new Date(today); mon.setDate(today.getDate()-(dow===0?6:dow-1));
+    return records.filter(r=>r.date>=mon.toISOString().slice(0,10));
+  }
+  if(xlsPeriod==='month'){
+    const m=today.toISOString().slice(0,7); // 'YYYY-MM'
+    return records.filter(r=>r.date?.startsWith(m));
+  }
+  if(xlsPeriod==='custom'){
+    const from=document.getElementById('range-from').value;
+    const to=document.getElementById('range-to').value;
+    return records.filter(r=>(!from||r.date>=from)&&(!to||r.date<=to));
+  }
+  return records;
+}
+function updateXlsPreview(){
+  const recs=getFilteredRecs();
+  const el=document.getElementById('xls-preview');
+  if(!el)return;
+  if(!recs.length){el.textContent='⚠️ 해당 기간 기록 없음';el.style.color='#c2410c';return;}
+  const dongs=[...new Set(recs.map(r=>r.unit.split(' ')[0]))].sort();
+  el.style.color='#2563eb';
+  el.textContent=`✅ ${recs.length}건 · ${dongs.join(', ')}`;
+}
+function renderExportSummary(){
+  const today=new Date().toISOString().slice(0,10);
+  const todayRecs=records.filter(r=>r.date===today);
+  const el=document.getElementById('finish-info');
+  const btn=document.getElementById('btn-finish');
+  if(el){
+    if(!todayRecs.length){
+      el.innerHTML='<span style="color:#94a3b8">오늘 작업한 기록이 없습니다.<br>작업이 있는 날만 저장하세요.</span>';
+      if(btn){btn.disabled=true;btn.style.opacity='0.4';}
+    } else {
+      const dongs=[...new Set(todayRecs.map(r=>r.unit.split(' ')[0]))].sort();
+      el.innerHTML=`✅ 오늘 작업: <b>${todayRecs.length}건</b><br>🏢 ${dongs.join(', ')}<br>📋 전체 누적: ${records.length}건`;
+      if(btn){btn.disabled=false;btn.style.opacity='1';}
+    }
+  }
+  // 엑셀 요약
+  const sumEl=document.getElementById('xls-summary');
+  if(sumEl){
+    const total=records.length;
+    if(!total){sumEl.innerHTML='아직 저장된 기록이 없습니다';return;}
+    const dates=records.map(r=>r.date).filter(Boolean).sort();
+    const first=dates[0]||'',last=dates[dates.length-1]||'';
+    const dongs=[...new Set(records.map(r=>r.unit.split(' ')[0]))].sort();
+    sumEl.innerHTML=`📋 전체 기록: <b>${total}건</b> &nbsp;|&nbsp; 📅 ${first} ~ ${last}<br>🏢 점검 동: ${dongs.join(', ')}`;
+  }
+  updateXlsPreview();
+  document.getElementById('info-cnt').textContent='📋 총 기록: '+records.length+'건';
+}
+
+/* 백업 + 엑셀 동시 저장 */
+function triggerDownload(blob, filename){
+  return new Promise(resolve=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=filename; a.style.display='none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      resolve();
+    },1500);
+  });
+}
+
+async function doFinish(){
+  const btn=document.getElementById('btn-finish');
+  const fnameEl=document.getElementById('finish-fname');
+  if(btn){btn.textContent='⏳ 저장 중...';btn.disabled=true;}
+  if(fnameEl)fnameEl.textContent='';
+  try{
+    const data=JSON.stringify({version:3,exportedAt:new Date().toISOString(),records,vacMap},null,2);
+    const fn='LH점검_백업_'+now8()+'.json';
+    await triggerDownload(new Blob([data],{type:'application/json'}),fn);
+    saveBackupDate();
+    renderLastBackupInfo();
+    if(btn){btn.textContent='✅ 백업 완료!';btn.disabled=false;if(fnameEl)fnameEl.textContent='💾 '+fn;}
+    setTimeout(()=>{if(btn)btn.textContent='💾 백업 저장';},5000);
+    toast('✅ 백업 저장 완료!');
+  }catch(e){
+    if(btn){btn.textContent='❌ 오류';btn.disabled=false;}
+    toast('❌ 백업 오류: '+e.message);
+  }
+}
+function sv(v){
+  if(v===null||v===undefined)return '';
+  const str=String(v);
+  return str;
+}
+
+function makeHeader(){
+  const h=[];
+  h.push('세대','점검일','점검차수','종합상태','점검자','공가시작일','공가일수');
+  for(const sec of Object.keys(CHKDEF))for(const n of CHKDEF[sec])h.push(sec+'_'+n);
+  for(const n of METERS){h.push(n+'_이전');h.push(n+'_현재');}
+  h.push('이상항목','비고','사진수','저장일시');
+  return h;
+}
+
+function makeRow(r){
+  const row=[];
+  const d=vacDays(r.vacDate);
+  row.push(sv(r.unit),sv(r.date),sv(r.type),sv(r.status),sv(r.inspector),sv(r.vacDate),d!==null?sv(d):'');
+  for(const sec of Object.keys(CHKDEF))for(const n of CHKDEF[sec])row.push(sv((r.checks&&r.checks[sec]&&r.checks[sec][n])||'정상'));
+  for(const n of METERS){row.push(sv(r.meter&&r.meter[n]&&r.meter[n].p));row.push(sv(r.meter&&r.meter[n]&&r.meter[n].c));}
+  row.push(sv(r.issues),sv(r.notes),sv(r.photos?r.photos.length:0),sv(r.savedAt));
+  return row;
+}
+
+function makeSheet(recs){
+  const sorted=[...recs].sort((a,b)=>sv(a.unit).localeCompare(sv(b.unit))||sv(a.date).localeCompare(sv(b.date)));
+  const data=[makeHeader()];
+  for(const r of sorted)data.push(makeRow(r));
+  // SheetJS aoa_to_sheet — 모든 값이 string/number/boolean이어야 함
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  const nCols=makeHeader().length;
+  const colW=[];
+  for(let i=0;i<nCols;i++)colW.push({wch:i<7?[14,12,8,10,8,12,7][i]:8});
+  ws['!cols']=colW;
+  return ws;
+}
+
+function exportXls(mode, src){
+  let recs;
+  if(mode==='filtered' && src==='rpt')
+    recs = getFilteredRecs(_rptPeriod,'rpt-range-from','rpt-range-to');
+  else if(mode==='filtered')
+    recs = getFilteredRecs(xlsPeriod,'range-from','range-to');
+  else if(mode==='session')
+    recs = records.filter(r=>sessIds.has(r.id));
+  else
+    recs = records;
+  if(!recs.length){toast('⚠️ 해당 기간 기록이 없습니다');return;}
+  try{
+    const wb=XLSX.utils.book_new();
+    // 동별 시트
+    const dongMap={};
+    for(const r of recs){
+      const d=sv(r.unit).split(' ')[0]||'기타';
+      if(!dongMap[d])dongMap[d]=[];
+      dongMap[d].push(r);
+    }
+    for(const d of DONGS){
+      if(!dongMap[d])continue;
+      XLSX.utils.book_append_sheet(wb,makeSheet(dongMap[d]),d);
+    }
+    // 전체 시트
+    XLSX.utils.book_append_sheet(wb,makeSheet(recs),'전체');
+    const label=xlsPeriod==='all'?'전체'
+      :xlsPeriod==='today'?'오늘'
+      :xlsPeriod==='week'?'이번주'
+      :xlsPeriod==='month'?'이번달':'기간';
+    const fn='LH점검_'+label+'_'+now8()+'.xlsx';
+    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([wbout],{type:'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fn;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
+    toast('📊 '+recs.length+'건 엑셀 저장: '+fn);
+    const btn=document.getElementById('btn-xls');
+    if(btn){btn.textContent='✅ 저장 완료!';btn.className='abtn done';
+      document.getElementById('xls-fname').textContent=fn;
+      setTimeout(()=>{btn.textContent='📊 엑셀 저장';btn.className='abtn xls';},4000);}
+  }catch(e){console.error(e);toast('❌ 엑셀 오류: '+e.message);}
+}
+
+/* ───── JSON 백업 / 복원 ───── */
+const DRAFT_KEY = 'lh_draft_v1'; // 자동 임시저장 키
+const BACKUP_DATE_KEY = 'lh_last_backup_date';
+let _draftTimer = null;
+
+// 임시저장 — 현재 입력 중인 폼 상태를 저장
+function saveDraft(){
+  if(!selUnit) return;
+  try {
+    const draft = {
+      selDong, selUnit,
+      date: document.getElementById('f-date')?.value || '',
+      type: document.getElementById('f-type')?.value || '',
+      notes: document.getElementById('f-notes')?.value || '',
+      vac: document.getElementById('f-vac')?.value || '',
+      checks: JSON.parse(JSON.stringify(fChecks)),
+      meter: JSON.parse(JSON.stringify(fMeter)),
+      photos: fPhotos.map(p=>({id:p.id, url:p.url})),
+      status: fStatus || '입주가능',
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch(e) { console.warn('임시저장 실패:', e); }
+}
+
+// 임시저장 삭제 (정식 저장 완료 후)
+function clearDraft(){
+  localStorage.removeItem(DRAFT_KEY);
+}
+
+// 임시저장 타이머 시작 (세대 선택 후 30초마다)
+function startDraftTimer(){
+  stopDraftTimer();
+  _draftTimer = setInterval(()=>{
+    if(selUnit) { saveDraft(); showDraftToast(); }
+  }, 30000);
+}
+function stopDraftTimer(){
+  if(_draftTimer){ clearInterval(_draftTimer); _draftTimer = null; }
+}
+function showDraftToast(){
+  const el = document.getElementById('draft-indicator');
+  if(el){ el.style.opacity='1'; setTimeout(()=>{ el.style.opacity='0'; }, 2000); }
+}
+
+// 앱 시작 시 임시저장 복구 확인 (복구팝업이 있으면 백업알림 안 뜸)
+function checkDraftRestore(){
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if(!raw) return false;
+    const draft = JSON.parse(raw);
+    if(!draft.selUnit) return false;
+    const savedAt = new Date(draft.savedAt);
+    const mins = Math.round((Date.now() - savedAt) / 60000);
+    const timeStr = mins < 60 ? `${mins}분 전` : `${Math.round(mins/60)}시간 전`;
+    const old2=document.getElementById('confirm-modal');if(old2)old2.remove();
+    const m=document.createElement('div');
+    m.id='confirm-modal';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    const draftJson = JSON.stringify(draft).replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
+    m.innerHTML=`<div style="background:#fff;border-radius:18px;padding:24px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,0.3);border-top:5px solid #2563eb">
+      <div style="font-size:16px;font-weight:900;margin-bottom:6px;color:#1e40af">📋 이전 작업 이어하기</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:14px">앱이 닫히기 전 저장되지 않은 작업이 있어요</div>
+      <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:4px">🏠 ${draft.selDong} ${draft.selUnit}</div>
+        <div style="font-size:12px;color:#64748b">⏱ ${timeStr} 자동저장 · 📸 사진 ${draft.photos?.length||0}장</div>
+      </div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">복구하면 이어서 입력할 수 있어요.<br>버리기를 누르면 임시저장이 삭제됩니다.</div>
+      <div style="display:flex;gap:10px">
+        <button onclick="clearDraft();document.getElementById('confirm-modal').remove();setTimeout(checkBackupAlert,400)"
+          style="flex:1;padding:12px;border-radius:10px;border:2px solid #e2e8f0;background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#64748b">
+          🗑️ 버리기
+        </button>
+        <button id="restore-ok-btn"
+          style="flex:2;padding:12px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-size:14px;font-weight:700;cursor:pointer">
+          ✅ 이어서 작업
+        </button>
+      </div>
+    </div>`;
+    document.body.appendChild(m);
+    document.getElementById('restore-ok-btn').onclick=()=>{
+      document.getElementById('confirm-modal').remove();
+      restoreDraft(draft);
+    };
+    return true;
+  } catch(e) { clearDraft(); return false; }
+}
+
+// 임시저장 데이터 복구
+function restoreDraft(draft){
+  try {
+    // 동/세대 선택
+    selDong = draft.selDong;
+    selUnit = draft.selUnit;
+    // 폼 복구
+    setTimeout(()=>{
+      document.getElementById('f-date') && (document.getElementById('f-date').value = draft.date);
+      document.getElementById('f-type') && (document.getElementById('f-type').value = draft.type);
+      document.getElementById('f-notes') && (document.getElementById('f-notes').value = draft.notes);
+      document.getElementById('f-vac') && (document.getElementById('f-vac').value = draft.vac);
+      fChecks = draft.checks || initChk();
+      fMeter = draft.meter || initMtr();
+      fPhotos = draft.photos || [];
+      fStatus = draft.status || '점검전';
+      renderDongs(); renderUnits(); renderMtr(); renderChks(); renderStatus(); renderPhotos(); renderSelInfo();
+      renderVacInfo && renderVacInfo();
+      showFormBody(true);
+      startDraftTimer();
+      toast('✅ 작업이 복구됐어요!');
+    }, 100);
+  } catch(e) { toast('❌ 복구 실패: '+e.message); }
+}
+
+
+
+function saveBackupDate(){
+  localStorage.setItem(BACKUP_DATE_KEY, new Date().toISOString());
+}
+function getLastBackupDate(){
+  return localStorage.getItem(BACKUP_DATE_KEY);
+}
+function renderLastBackupInfo(){
+  const el = document.getElementById('last-backup-info');
+  if(!el) return;
+  const saved = getLastBackupDate();
+  if(!saved){
+    el.innerHTML = '⚠️ 아직 백업한 적이 없어요! 지금 백업해두세요.';
+    el.style.background = '#fff7ed'; el.style.color = '#c2410c';
+    return;
+  }
+  const diff = Math.floor((Date.now() - new Date(saved).getTime()) / (1000*60*60*24));
+  const dateStr = new Date(saved).toLocaleDateString('ko-KR');
+  if(diff === 0){
+    el.innerHTML = '✅ 마지막 백업: <b>오늘</b> ('+dateStr+')';
+    el.style.background = '#f0fdf4'; el.style.color = '#16a34a';
+  } else if(diff <= 7){
+    el.innerHTML = '✅ 마지막 백업: <b>'+diff+'일 전</b> ('+dateStr+')';
+    el.style.background = '#f0f9ff'; el.style.color = '#0891b2';
+  } else {
+    el.innerHTML = '⚠️ 마지막 백업: <b>'+diff+'일 전</b> ('+dateStr+') — 백업을 권장해요!';
+    el.style.background = '#fff7ed'; el.style.color = '#c2410c';
+  }
+}
+function checkBackupAlert(){
+  const saved = getLastBackupDate();
+  const diff = saved ? Math.floor((Date.now() - new Date(saved).getTime()) / (1000*60*60*24)) : 999;
+  if(diff < 7) return;
+  const msg = saved
+    ? diff+'일 동안 백업하지 않았어요!\n지금 백업 파일을 저장할까요?'
+    : '아직 한 번도 백업하지 않았어요!\n지금 백업 파일을 저장할까요?';
+  showConfirmModal('💾 백업 알림', msg, ()=>{ switchTab('export'); setTimeout(exportBackup, 300); });
+}
+
+/* ══════════════════════════════════════
+   Google Drive 백업 연동
+   ══════════════════════════════════════ */
+const GDRIVE_CLIENT_ID = '718613032781-ltcmuh0iqgoo228p3qnacrmnp4cle2b2.apps.googleusercontent.com';
+const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const GDRIVE_FOLDER_NAME = 'LH공가점검_백업';
+let gdriveToken = null;
+let gdriveFolderId = null;
+
+function gdriveLogin(){
+  if(!GDRIVE_CLIENT_ID){
+    showGdriveSetupGuide();
+    return;
+  }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPE,
+    callback: (res)=>{
+      if(res.error){ toast('❌ 로그인 실패: '+res.error); return; }
+      gdriveToken = res.access_token;
+      localStorage.setItem('gdrive_token', res.access_token);
+      localStorage.setItem('gdrive_token_exp', Date.now() + (res.expires_in-60)*1000);
+      updateGdriveUI(true);
+      toast('✅ Google 계정 연결 완료!');
+    }
+  });
+  client.requestAccessToken();
+}
+
+function gdriveLogout(){
+  gdriveToken = null; gdriveFolderId = null;
+  localStorage.removeItem('gdrive_token');
+  localStorage.removeItem('gdrive_token_exp');
+  updateGdriveUI(false);
+  toast('🔓 Google 로그아웃 완료');
+}
+
+function updateGdriveUI(loggedIn){
+  document.getElementById('btn-gdrive-login').style.display = loggedIn?'none':'flex';
+  document.getElementById('btn-gdrive-save').style.display = loggedIn?'':'none';
+  document.getElementById('btn-gdrive-load').style.display = loggedIn?'':'none';
+  document.getElementById('btn-gdrive-logout').style.display = loggedIn?'':'none';
+  const st = document.getElementById('gdrive-status');
+  if(loggedIn){
+    st.style.display='';
+    st.textContent = '✅ Google 계정 연결됨 · Drive에 백업 준비 완료';
+  } else {
+    st.style.display='none';
+  }
+}
+
+function checkGdriveToken(){
+  const token = localStorage.getItem('gdrive_token');
+  const exp = parseInt(localStorage.getItem('gdrive_token_exp')||'0');
+  if(token && Date.now() < exp){
+    gdriveToken = token;
+    updateGdriveUI(true);
+  }
+}
+
+async function getOrCreateFolder(){
+  if(gdriveFolderId) return gdriveFolderId;
+  // 폴더 검색
+  const search = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${GDRIVE_FOLDER_NAME}'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false&fields=files(id,name)`,{
+    headers:{Authorization:'Bearer '+gdriveToken}
+  });
+  const data = await search.json();
+  if(data.files && data.files.length > 0){
+    gdriveFolderId = data.files[0].id;
+    return gdriveFolderId;
+  }
+  // 폴더 없으면 생성
+  const create = await fetch('https://www.googleapis.com/drive/v3/files',{
+    method:'POST',
+    headers:{Authorization:'Bearer '+gdriveToken,'Content-Type':'application/json'},
+    body: JSON.stringify({name:GDRIVE_FOLDER_NAME, mimeType:'application/vnd.google-apps.folder'})
+  });
+  const folder = await create.json();
+  gdriveFolderId = folder.id;
+  return gdriveFolderId;
+}
+
+// 오래된 백업 자동 삭제 — 최신 N개만 유지
+async function gdriveCleanupOldBackups(folderId){
+  try {
+    // 폴더 내 백업 파일 목록 (생성시간 오래된 순)
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+name+contains+'LH공가점검_백업'+and+trashed=false` +
+      `&orderBy=createdTime+desc&fields=files(id,name,createdTime)&pageSize=50`,
+      {headers:{Authorization:'Bearer '+gdriveToken}}
+    );
+    const data = await res.json();
+    const files = data.files || [];
+    // 최신 N개 이후 파일 삭제
+    const toDelete = files.slice(GDRIVE_MAX_BACKUPS);
+    for(const f of toDelete){
+      await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}`,{
+        method:'DELETE',
+        headers:{Authorization:'Bearer '+gdriveToken}
+      });
+    }
+    return toDelete.length;
+  } catch(e){
+    console.warn('백업 정리 중 오류(무시):', e);
+    return 0;
+  }
+}
+
+const GDRIVE_MAX_BACKUPS = 3; // 최신 N개만 유지
+
+async function gdriveBackup(){
+  if(!gdriveToken){ toast('❌ 먼저 Google 로그인이 필요합니다'); return; }
+  const btn = document.getElementById('btn-gdrive-save');
+  const fname = document.getElementById('gdrive-fname');
+  btn.textContent = '⏳ Drive에 저장 중...';
+  btn.disabled = true;
+  try {
+    const folderId = await getOrCreateFolder();
+    const now = new Date();
+    const dateStr = now.getFullYear()+pad2(now.getMonth()+1)+pad2(now.getDate())+'_'+pad2(now.getHours())+pad2(now.getMinutes());
+    const filename = `LH공가점검_백업_${dateStr}.json`;
+    const extraVac = loadExtraVac();
+    const payload = JSON.stringify({records, vacMap, extraVac, exportedAt: new Date().toISOString(), version:'v3'});
+    const sizeMB = (new Blob([payload]).size / 1024 / 1024).toFixed(1);
+    btn.textContent = `⏳ 업로드 중... (${sizeMB}MB)`;
+
+    // 멀티파트 업로드
+    const boundary = '-------LH_BACKUP_BOUNDARY';
+    const delimiter = '\r\n--' + boundary + '\r\n';
+    const closeDelim = '\r\n--' + boundary + '--';
+    const metadata = JSON.stringify({name: filename, parents:[folderId]});
+    const multipartBody =
+      delimiter +
+      'Content-Type: application/json\r\n\r\n' + metadata +
+      delimiter +
+      'Content-Type: application/json\r\n\r\n' + payload +
+      closeDelim;
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,size',{
+      method:'POST',
+      headers:{Authorization:'Bearer '+gdriveToken,'Content-Type':'multipart/related; boundary='+boundary},
+      body: multipartBody
+    });
+    const result = await res.json();
+    if(result.id){
+      saveBackupDate();
+      renderLastBackupInfo();
+
+      // ── 오래된 백업 자동 삭제 (최신 N개만 유지) ──
+      btn.textContent = '⏳ 오래된 백업 정리 중...';
+      const deleted = await gdriveCleanupOldBackups(folderId);
+      const cleanMsg = deleted > 0 ? `<br><span style="font-size:10px;color:#94a3b8">🗑️ 오래된 백업 ${deleted}개 자동 삭제됨 (최신 ${GDRIVE_MAX_BACKUPS}개 유지)</span>` : '';
+
+      fname.innerHTML = `✅ Drive 저장 완료: <b>${filename}</b> (${sizeMB}MB)${cleanMsg}<br><span style="font-size:10px;color:#94a3b8">📁 LH공가점검_백업 폴더</span>`;
+      fname.style.color = '#15803d';
+      toast(`☁️ Drive 백업 완료! (최신 ${GDRIVE_MAX_BACKUPS}개 유지)`);
+    } else {
+      throw new Error(result.error?.message || '업로드 실패');
+    }
+  } catch(e){
+    fname.textContent = '❌ 오류: '+e.message;
+    fname.style.color = '#dc2626';
+    if(e.message.includes('401') || e.message.includes('invalid_token')){
+      gdriveLogout();
+      toast('❌ 로그인이 만료되었습니다. 다시 로그인해주세요.');
+    } else {
+      toast('❌ Drive 저장 실패: '+e.message);
+    }
+  } finally {
+    btn.textContent = '☁️ Drive에 백업 저장';
+    btn.disabled = false;
+  }
+}
+
+async function gdriveRestore(){
+  if(!gdriveToken){ toast('❌ 먼저 Google 로그인이 필요합니다'); return; }
+  const btn = document.getElementById('btn-gdrive-load');
+  btn.innerHTML = '⏳ Drive 목록 불러오는 중...';
+  btn.disabled = true;
+  document.getElementById('gdrive-fname').textContent = '☁️ Drive에 연결 중...';
+  document.getElementById('gdrive-fname').style.color = '#2563eb';
+  try {
+    const folderId = await getOrCreateFolder();
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+name+contains+'LH공가점검_백업'+and+trashed=false&orderBy=createdTime+desc&fields=files(id,name,size,createdTime)&pageSize=20`,{
+      headers:{Authorization:'Bearer '+gdriveToken}
+    });
+    const data = await res.json();
+    if(!data.files || !data.files.length){
+      toast('📂 Drive에 백업 파일이 없습니다');
+      return;
+    }
+    showGdriveFileList(data.files);
+  } catch(e){
+    toast('❌ 목록 조회 실패: '+e.message);
+  } finally {
+    btn.innerHTML = '☁️ Drive에서 백업 불러오기';
+    btn.disabled = false;
+  }
+}
+
+function showGdriveFileList(files){
+  const listHtml = files.map((f,i)=>{
+    const dt = new Date(f.createdTime);
+    const dateStr = `${dt.getFullYear()}.${pad2(dt.getMonth()+1)}.${pad2(dt.getDate())} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
+    const sizeMB = f.size ? (parseInt(f.size)/1024/1024).toFixed(1)+'MB' : '-';
+    return `<div onclick="gdriveDownloadFile('${f.id}','${f.name}',this)" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:all 0.15s" onmouseover="this.style.borderColor='#16a34a';this.style.background='#f0fdf4'" onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
+      <div style="font-weight:700;font-size:12px;color:#1e293b;margin-bottom:3px">${f.name}</div>
+      <div style="font-size:11px;color:#64748b">📅 ${dateStr} · 📦 ${sizeMB}</div>
+    </div>`;
+  }).join('');
+  showConfirmModal(
+    '☁️ Drive 백업 파일 선택',
+    `<div style="font-size:12px;color:#475569;margin-bottom:12px">불러올 백업 파일을 선택하세요.<br><span style="color:#dc2626;font-weight:700">⚠️ 현재 데이터가 덮어씌워집니다.</span></div>${listHtml}`,
+    null
+  );
+}
+
+async function gdriveDownloadFile(fileId, fileName, el){
+  // 선택 표시
+  document.querySelectorAll('.gdrive-file-item').forEach(e=>e.style.borderColor='#e2e8f0');
+  el.style.borderColor = '#16a34a';
+  el.style.background = '#f0fdf4';
+
+  // 진행 표시 함수
+  const setProgress = (step, msg, color='#15803d') => {
+    el.innerHTML = `
+      <div style="font-weight:700;font-size:12px;color:${color};margin-bottom:6px">${msg}</div>
+      <div style="background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden">
+        <div style="height:100%;background:${color};border-radius:99px;width:${step}%;transition:width 0.3s"></div>
+      </div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:4px">${step}%</div>`;
+  };
+
+  try {
+    setProgress(10, '☁️ Drive에서 다운로드 중...');
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{
+      headers:{Authorization:'Bearer '+gdriveToken}
+    });
+    setProgress(40, '📦 파일 읽는 중...');
+    const text = await res.text();
+    setProgress(60, '🔍 데이터 확인 중...');
+    const data = JSON.parse(text);
+    if(!data.records) throw new Error('올바른 백업 파일이 아닙니다');
+    setProgress(75, `📋 기록 ${data.records.length}건 불러오는 중...`);
+    records = data.records || [];
+    vacMap = data.vacMap || {};
+    if(data.extraVac) saveExtraVac(data.extraVac);
+    saveLS();
+    sessIds = new Set(records.map(r=>r.id));
+    setProgress(90, '🔄 화면 업데이트 중...');
+    await new Promise(r=>setTimeout(r,100)); // UI 업데이트 여유
+    renderDongs(); renderUnits(); renderMtr();
+    updBadge(); renderSessBanner(); renderVacXlsSummary();
+    setProgress(100, `✅ 복원 완료! (${records.length}건)`, '#16a34a');
+    await new Promise(r=>setTimeout(r,800));
+    closeModal();
+    toast(`✅ ${fileName} 복원 완료! (${records.length}건)`);
+    document.getElementById('gdrive-fname').innerHTML = `✅ 복원 완료: <b>${fileName}</b> (${records.length}건)`;
+    document.getElementById('gdrive-fname').style.color = '#15803d';
+  } catch(e){
+    el.innerHTML = `<div style="color:#dc2626;font-size:12px;font-weight:700">❌ 복원 실패: ${e.message}</div>`;
+    toast('❌ 복원 실패: '+e.message);
+  }
+}
+
+function showGdriveSetupGuide(){
+  showConfirmModal(
+    '⚙️ Google Drive 설정 필요',
+    `<div style="font-size:12px;color:#475569;line-height:2">
+      Google Drive 연동을 사용하려면 <b>Google Cloud Console</b>에서<br>
+      OAuth 클라이언트 ID 발급이 필요합니다.<br><br>
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;font-size:11px">
+        📌 발급 방법은 <b>Notion 매뉴얼</b>을 참고해주세요.<br>
+        발급 후 앱 코드의 <code>GDRIVE_CLIENT_ID</code>에 입력하면 됩니다.
+      </div>
+    </div>`,
+    null
+  );
+}
+
+function initGdrive(){
+  // 저장된 토큰 복원 시도
+  checkGdriveToken();
+}
+
+function exportBackup(){
+  const btn=document.getElementById('btn-bak');
+  btn.textContent='⏳ 생성 중...';btn.className='abtn loading';
+  try{
+    const data=JSON.stringify({version:3,exportedAt:new Date().toISOString(),records,vacMap},null,2);
+    const blob=new Blob([data],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    const fn='LH점검_백업_'+now8()+'.json';a.download=fn;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    saveBackupDate();
+    renderLastBackupInfo();
+    btn.textContent='✅ 백업 완료!';btn.className='abtn done';
+    document.getElementById('bak-fname').textContent=fn;
+    setTimeout(()=>{btn.textContent='💾 백업 파일 저장';btn.className='abtn bak';},4000);
+    toast('💾 백업: '+fn);
+  }catch(e){btn.textContent='❌ 오류';btn.className='abtn err';setTimeout(()=>{btn.textContent='💾 백업 파일 저장';btn.className='abtn bak';},3000);toast('❌ 오류: '+e.message);}
+}
+document.getElementById('restore-in').onchange=function(e){
+  const f=e.target.files[0];if(!f)return;
+  toast('📂 파일 읽는 중...');
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!d.records||!Array.isArray(d.records))throw new Error('올바른 백업 파일이 아닙니다');
+      const total=d.records.length;
+      const photoCnt=d.records.reduce((s,r)=>s+(r.photos?.length||0),0);
+      const exportedAt=d.exportedAt?new Date(d.exportedAt).toLocaleString('ko-KR'):'알 수 없음';
+      // confirm 대신 모달 사용 (사파리 호환)
+      showConfirmModal(
+        `📂 백업 불러오기`,
+        `저장일시: ${exportedAt}\n기록: ${total}건 / 사진: ${photoCnt}장\n\n현재 기록 ${records.length}건과 합칩니다.\n(중복은 자동으로 제외됩니다)`,
+        ()=>{
+          const exist=new Set(records.map(r=>r.id));
+          const newR=d.records.filter(r=>!exist.has(r.id));
+          const incomingVac=d.vacMap||d.vacDatesMap||{};
+          records=[...records,...newR];
+          vacMap={...vacMap,...incomingVac};
+          // extraVac(추가 공가) 병합
+          if(d.extraVac){
+            const curExtra=loadExtraVac();
+            saveExtraVac({...curExtra,...d.extraVac});
+          }
+          saveLS();updBadge();renderVacXlsSummary();
+          renderDongs();renderUnits();renderSessBanner();renderSelInfo();
+          switchTab('records');
+          const skipped=total-newR.length;
+          toast(`✅ ${newR.length}건 추가${skipped>0?' (중복 '+skipped+'건 제외)':''}`);
+          document.getElementById('info-cnt').textContent='📋 총 기록: '+records.length+'건';
+        }
+      );
+    }catch(err){
+      console.error(err);
+      toast('❌ 파일 오류: '+err.message);
+    }
+  };
+  r.onerror=()=>toast('❌ 파일을 읽을 수 없습니다');
+  r.readAsText(f,'utf-8');
+  e.target.value='';
+};
+
+function showConfirmModal(title, msg, onOk){
+  const old=document.getElementById('confirm-modal');if(old)old.remove();
+  const m=document.createElement('div');
+  m.id='confirm-modal';
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  m.innerHTML=`<div style="background:#fff;border-radius:18px;padding:24px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,0.3)">
+    <div style="font-size:17px;font-weight:900;margin-bottom:12px">${title}</div>
+    <div style="font-size:13px;color:#475569;white-space:pre-line;line-height:1.7;margin-bottom:20px">${msg}</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('confirm-modal').remove()" style="flex:1;padding:13px;border-radius:10px;border:2px solid #e2e8f0;background:#fff;font-size:14px;font-weight:700;cursor:pointer">취소</button>
+      <button id="confirm-ok-btn" style="flex:2;padding:13px;border-radius:10px;border:none;background:#2563eb;color:#fff;font-size:14px;font-weight:700;cursor:pointer">✅ 확인</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+  document.getElementById('confirm-ok-btn').onclick=()=>{m.remove();onOk();};
+}
+
+/* ───── 초기화 ───── */
+
+
+/* ───── PC 잠금장치 ───── */
+const LOCK_PW_KEY = 'lh_lock_pw';
+const LOCK_STATE_KEY = 'lh_locked'; // localStorage — 브라우저 닫아도 유지
+const DEFAULT_PW = '1234';
+
+function checkPcLock(){
+  // 잠금 상태일 때만 오버레이 표시
+  if(localStorage.getItem(LOCK_STATE_KEY) === '1'){
+    showLockOverlay();
+  }
+}
+function showLockOverlay(){
+  const overlay = document.getElementById('pc-lock-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(()=>document.getElementById('lock-pw-inp').focus(), 100);
+}
+function doUnlock(){
+  const inp = document.getElementById('lock-pw-inp');
+  const err = document.getElementById('lock-err');
+  const pw = localStorage.getItem(LOCK_PW_KEY) || DEFAULT_PW;
+  if(inp.value === pw){
+    localStorage.removeItem(LOCK_STATE_KEY); // 잠금 해제
+    document.getElementById('pc-lock-overlay').style.display = 'none';
+    inp.value = '';
+    err.textContent = '';
+    toast('🔓 잠금이 해제됐어요');
+  } else {
+    err.textContent = '❌ 비밀번호가 틀렸어요';
+    inp.value = '';
+    inp.focus();
+    setTimeout(()=>err.textContent='', 2000);
+  }
+}
+function changeLockPw(){
+  const cur = prompt('현재 비밀번호를 입력하세요:');
+  const stored = localStorage.getItem(LOCK_PW_KEY) || DEFAULT_PW;
+  if(cur !== stored){ toast('❌ 현재 비밀번호가 틀렸어요'); return; }
+  const np = prompt('새 비밀번호를 입력하세요 (숫자/영문):');
+  if(!np || np.length < 4){ toast('⚠️ 4자 이상 입력해주세요'); return; }
+  const np2 = prompt('새 비밀번호를 다시 입력하세요:');
+  if(np !== np2){ toast('❌ 비밀번호가 일치하지 않아요'); return; }
+  localStorage.setItem(LOCK_PW_KEY, np);
+  toast('✅ 비밀번호가 변경됐어요!');
+}
+function lockNow(){
+  localStorage.setItem(LOCK_STATE_KEY, '1'); // 잠금 상태 저장
+  showLockOverlay();
+  toast('🔒 화면이 잠겼어요');
+}
+
+/* ───── QR 스캐너 ───── */
+let _qrStream = null, _qrTimer = null;
+
+function openQrScanner(){
+  const wrap = document.getElementById('qr-scanner-wrap');
+  wrap.style.display = 'block';
+  const video = document.getElementById('qr-video');
+  const status = document.getElementById('qr-status');
+  status.textContent = '카메라 시작 중...';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(stream=>{
+      _qrStream = stream;
+      video.srcObject = stream;
+      video.play();
+      status.textContent = 'QR코드를 네모 안에 맞춰주세요';
+      _qrTimer = setInterval(()=>scanQrFrame(video), 250);
+    })
+    .catch(e=>{
+      status.textContent = '❌ 카메라 권한이 필요해요';
+      console.error(e);
+    });
+}
+
+function closeQrScanner(){
+  clearInterval(_qrTimer); _qrTimer = null;
+  if(_qrStream){ _qrStream.getTracks().forEach(t=>t.stop()); _qrStream = null; }
+  document.getElementById('qr-scanner-wrap').style.display = 'none';
+  document.getElementById('qr-video').srcObject = null;
+}
+
+function scanQrFrame(video){
+  if(!video.videoWidth) return;
+  const canvas = document.getElementById('qr-canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  if(typeof jsQR === 'undefined') return;
+  const code = jsQR(img.data, img.width, img.height, {inversionAttempts:'dontInvert'});
+  if(code && code.data){
+    const url = code.data;
+    // URL에서 dong, unit 파라미터 추출
+    try {
+      const parsed = new URL(url);
+      const dong = parsed.searchParams.get('dong');
+      const unit = parsed.searchParams.get('unit');
+      if(dong && unit){
+        closeQrScanner();
+        jumpToUnit(dong + ' ' + unit);
+        toast('📍 ' + dong + ' ' + unit + ' 으로 이동했어요!');
+        return;
+      }
+    } catch(e){}
+    // URL 형식 아니면 그냥 텍스트로 검색 시도
+    document.getElementById('qr-status').textContent = '❓ LH앱 QR코드가 아니에요';
+    setTimeout(()=>{ if(document.getElementById('qr-status')) document.getElementById('qr-status').textContent='QR코드를 네모 안에 맞춰주세요'; }, 2000);
+  }
+}
+
+function init(){
+  loadLS();
+  renderDongs();renderUnits();renderMtr();
+  updBadge();renderSessBanner();renderVacXlsSummary();
+  document.getElementById('info-cnt').textContent='📋 총 기록: '+records.length+'건';
+  // PC 잠금 확인
+  checkPcLock();
+  // QR코드 스캔 시 URL 파라미터로 해당 동·호수 자동 이동
+  const qp = new URLSearchParams(window.location.search);
+  const qDong = qp.get('dong'), qUnit = qp.get('unit');
+  if(qDong && qUnit){
+    setTimeout(()=>{
+      jumpToUnit(qDong + ' ' + qUnit);
+      toast('📍 ' + qDong + ' ' + qUnit + ' 으로 이동했어요');
+    }, 500);
+  } else {
+    // 미저장 작업 복구 확인 — 복구팝업 없을 때만 백업알림 표시
+    setTimeout(()=>{
+      const hasDraft = checkDraftRestore();
+      if(!hasDraft) setTimeout(checkBackupAlert, 600);
+    }, 800);
+  }
+  // Google Drive 토큰 복원
+  setTimeout(initGdrive, 500);
+}
+init();
+</script>
+</body>
+</html>
