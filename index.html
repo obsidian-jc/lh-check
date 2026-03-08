@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>LH 공가점검 v10</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#f0f4f8;color:#1e293b;max-width:480px;margin:0 auto;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input,select,textarea{font-family:inherit;outline:none}
+
+/* 헤더 */
+.hdr{background:#fff;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px #00000010}
+.hdr-top{display:flex;align-items:center;padding:13px 16px 10px}
+.hdr-title{font-size:18px;font-weight:900;color:#2563eb}
+.hdr-sub{font-size:10px;color:#94a3b8;font-weight:600;margin-top:1px}
+.hdr-badges{display:flex;gap:6px;margin-left:auto;align-items:center}
+.hdr-badge{background:#eff6ff;border:1px solid #bfdbfe;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;color:#2563eb;white-space:nowrap}
+.hdr-vbadge{background:#fff7ed;border:1px solid #fed7aa;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;color:#ea580c;white-space:nowrap}
+
+/* 탭 */
+.tabs{display:flex;border-top:1px solid #e2e8f0}
+.tab{flex:1;padding:10px 4px;background:none;border:none;border-bottom:2px solid transparent;color:#94a3b8;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:4px}
+.tab.on{border-bottom-color:#2563eb;color:#2563eb}
+
+/* 공통 */
+.pad{padding:16px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px #0000000a}
+.ct{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px}
+.lbl{font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:5px}
+.inp{width:100%;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 12px;font-size:15px;background:#fff;color:#1e293b}
+input[type=date]{color-scheme:light}
+textarea.inp{resize:none}
+
+/* 점검항목 */
+.chk-row{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:#f0f4f8;border:1.5px solid #e2e8f0;border-radius:10px;gap:4px}
+.chk-name{font-size:11px;font-weight:700;color:#475569;min-width:52px}
+.chk-grp{display:flex;gap:4px}
+.chk-btn{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid #bbf7d0;background:#f0fdf4;color:#15803d;cursor:pointer;transition:all 0.15s}
+.chk-btn.이상{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+.chk-btn.긴급{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+.chk-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+
+/* 동/세대 버튼 */
+.dong-wrap{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.dong-btn{padding:8px 14px;border-radius:20px;font-size:12px;font-weight:800;border:2px solid #94a3b8;background:#e2e8f0;color:#1e293b}
+.dong-btn.on{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.unit-grid{display:grid;gap:4px;max-height:220px;overflow-y:auto;padding:2px}
+.u-btn{width:100%;padding:6px 2px;border-radius:8px;font-size:11px;font-weight:800;border:1.5px solid #e2e8f0;background:#fff;color:#1e293b;position:relative}
+.u-btn.sel{background:#2563eb;color:#fff;border-color:#2563eb}
+.u-btn.s점검전{background:#f1f5f9;color:#475569;border-color:#e2e8f0}
+.u-btn.s입주가능{background:#f0fdf4;color:#15803d;border-color:#86efac}
+.u-btn.s수리중{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+.u-btn.s하자있음{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+.u-btn.s입주청소전{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+
+/* 상태버튼 */
+.st-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.st-btn{padding:8px 14px;border-radius:10px;font-size:12px;font-weight:800;border:2px solid transparent;flex:1;min-width:80px}
+.st-btn.on{box-shadow:0 0 0 3px #2563eb40}
+
+/* 사진 */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.photo-cell{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;border:1.5px solid #e2e8f0}
+.photo-cell img{width:100%;height:100%;object-fit:cover}
+.photo-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* 저장버튼 */
+.save-btn{width:100%;padding:16px;border-radius:14px;background:#2563eb;color:#fff;font-size:16px;font-weight:900;margin-top:8px}
+.save-btn:active{background:#1d4ed8}
+
+/* 실행버튼 그룹 */
+.abtn{width:100%;padding:14px;border-radius:12px;font-size:14px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.abtn.pdf{background:#fff;border:2px solid #2563eb;color:#2563eb}
+.abtn.xls{background:#fff;border:2px solid #16a34a;color:#16a34a}
+.abtn.bk{background:#fff;border:2px solid #7c3aed;color:#7c3aed}
+.abtn.rst{background:#fff;border:2px solid #0891b2;color:#0891b2}
+.abtn.red{background:#fff;border:2px solid #dc2626;color:#dc2626}
+.abtn.done{background:#f0fdf4;border-color:#86efac;color:#16a34a}
+
+/* 기록 */
+.rec-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer}
+.rec-card:active{background:#f8fafc}
+.rec-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.rec-unit{font-size:15px;font-weight:900}
+.rec-date{font-size:11px;color:#94a3b8;font-weight:600}
+.rec-badges{display:flex;gap:5px;flex-wrap:wrap}
+.rbdg{border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700}
+
+/* 대시보드 */
+.dash-big{font-size:48px;font-weight:900;color:#2563eb;text-align:center}
+.dash-sub{text-align:center;font-size:13px;color:#64748b;font-weight:700;margin-top:4px}
+.prog-bar{background:#e2e8f0;border-radius:99px;height:12px;overflow:hidden;margin:12px 0}
+.prog-fill{height:100%;border-radius:99px;background:#2563eb;transition:width .4s}
+
+/* 잠금 */
+.lock-overlay{position:fixed;inset:0;background:linear-gradient(135deg,#1e40af,#0891b2);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.lock-box{background:#fff;border-radius:20px;padding:28px 24px;width:280px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+
+/* 토스트 */
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:700;opacity:0;transition:opacity .25s;z-index:9000;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* 섹션 헤더 */
+.sec-hdr{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.sec-div{flex:1;height:1px;background:#e2e8f0}
+
+/* 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#fff;border-radius:18px;padding:24px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.25)}
+
+/* QR 스캔 */
+#qr-video-wrap{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#000}
+#qr-video-wrap video{width:100%;display:block}
+
+/* 빈양식 세대 칩 */
+.blank-chip{display:inline-flex;align-items:center;gap:4px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;color:#1d4ed8;margin:2px}
+
+/* 보고서 탭 */
+.rpt-sec{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:12px}
+.rpt-st{display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:4px 0;border-bottom:1px solid #f1f5f9}
+
+/* 임시저장 */
+#draft-indicator{position:fixed;top:70px;right:12px;background:#2563eb;color:#fff;border-radius:99px;padding:4px 12px;font-size:11px;font-weight:700;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-title">🏢 LH 공가점검</div>
+      <div class="hdr-sub">양주율정마을7단지</div>
+    </div>
+    <div class="hdr-badges">
+      <div id="hdr-vbadge" class="hdr-vbadge">공가 184세대</div>
+      <div id="hdr-badge" class="hdr-badge">0건</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" id="tab-form" onclick="switchTab('form')">📝<span>점검</span></button>
+    <button class="tab" id="tab-dash" onclick="switchTab('dash')">📊<span>현황</span></button>
+    <button class="tab" id="tab-records" onclick="switchTab('records')">📂<span>기록</span></button>
+    <button class="tab" id="tab-report" onclick="switchTab('report')">📄<span>보고서</span></button>
+    <button class="tab" id="tab-export" onclick="switchTab('export')">📤<span>내보내기</span></button>
+  </div>
+</div>
+
+<!-- 임시저장 표시 -->
+<div id="draft-indicator">💾 자동저장됨</div>
+<div id="toast"></div>
+
+<!-- ═══ 점검입력 탭 ═══ -->
+<div id="pane-form" class="pad">
+
+  <!-- 세대선택 -->
+  <div class="card">
+    <div class="ct">🏠 세대 선택 <span id="dong-unit-count" style="margin-left:auto;font-size:10px;color:#94a3b8;font-weight:600;text-transform:none"></span></div>
+    <div id="dong-wrap" class="dong-wrap"></div>
+    <div id="unit-grid" class="unit-grid" style="grid-template-columns:repeat(5,1fr)"></div>
+  </div>
+
+  <!-- 폼 본체 (세대 선택 전 숨김) -->
+  <div id="form-body" style="display:none">
+
+    <!-- 선택된 세대 정보 -->
+    <div id="sel-info" style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div id="sel-unit-name" style="font-size:18px;font-weight:900;color:#1e40af"></div>
+        <div id="sel-unit-sub" style="font-size:11px;color:#64748b;margin-top:2px"></div>
+      </div>
+      <div id="sel-type-badge" style="background:#2563eb;color:#fff;border-radius:10px;padding:4px 10px;font-size:12px;font-weight:800"></div>
+    </div>
+
+    <!-- 기본정보 -->
+    <div class="card">
+      <div class="ct">📋 기본 정보</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="lbl">점검일</label><input id="f-date" type="date" class="inp" style="font-size:14px" oninput="saveDraft()"></div>
+        <div><label class="lbl">점검차수</label><select id="f-type" class="inp" style="font-size:14px" onchange="saveDraft()"></select></div>
+      </div>
+      <div><label class="lbl">공가시작일</label><input id="f-vac" type="date" class="inp" style="font-size:14px;margin-bottom:8px" oninput="renderVacInfo();saveDraft()"></div>
+      <div id="vac-info-box"></div>
+    </div>
+
+    <!-- 종합상태 -->
+    <div class="card">
+      <div class="ct">🚦 종합상태</div>
+      <div class="st-row" id="st-row"></div>
+    </div>
+
+    <!-- 점검항목 -->
+    <div class="card">
+      <div class="ct">✅ 점검항목</div>
+      <div id="chk-body"></div>
+    </div>
+
+    <!-- 계량기 -->
+    <div class="card">
+      <div class="ct">📊 계량기</div>
+      <div id="mtr-body"></div>
+    </div>
+
+    <!-- 메모 -->
+    <div class="card">
+      <div class="ct">📝 메모</div>
+      <textarea id="f-notes" class="inp" rows="3" placeholder="특이사항 메모..." oninput="saveDraft()"></textarea>
+    </div>
+
+    <!-- 점검자 -->
+    <div class="card">
+      <div class="ct">👤 점검자</div>
+      <input id="f-inspector" class="inp" placeholder="점검자 이름" oninput="saveDraft()">
+    </div>
+
+    <!-- 사진 -->
+    <div class="card">
+      <div class="ct">📸 사진 <span id="photo-count" style="font-size:10px;color:#94a3b8;margin-left:4px">0장</span></div>
+      <input id="photo-input" type="file" accept="image/*" multiple style="display:none" onchange="addPhotos(this)">
+      <button class="abtn bk" onclick="document.getElementById('photo-input').click()" style="margin-bottom:10px">📷 사진 추가</button>
+      <div id="photo-grid" class="photo-grid"></div>
+    </div>
+
+    <!-- 저장 -->
+    <button class="save-btn" onclick="saveRecord()">💾 점검 저장</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ═══ 현황 탭 ═══ -->
+<div id="pane-dash" class="pad" style="display:none">
+  <div class="card">
+    <div class="dash-big" id="dash-pct">0%</div>
+    <div class="dash-sub" id="dash-cnt">0 / 0 세대 완료</div>
+    <div class="prog-bar"><div class="prog-fill" id="dash-bar" style="width:0%"></div></div>
+    <div style="text-align:center;font-size:12px;color:#f97316;font-weight:700" id="dash-untouched"></div>
+  </div>
+  <div class="card">
+    <div class="ct">🏢 동별 현황</div>
+    <div id="dash-dong-list"></div>
+  </div>
+  <div class="card">
+    <div class="ct">🏠 미점검 세대</div>
+    <div id="dash-unlist"></div>
+  </div>
+</div>
+
+<!-- ═══ 기록 탭 ═══ -->
+<div id="pane-records" class="pad" style="display:none">
+  <!-- QR 스캔 -->
+  <div class="card" style="margin-bottom:10px">
+    <button class="abtn bk" id="btn-qr-scan" onclick="toggleQrScan()" style="margin-bottom:0">📷 QR코드 스캔</button>
+    <div id="qr-scan-area" style="display:none;margin-top:10px">
+      <div id="qr-video-wrap"><video id="qr-video" autoplay playsinline muted></video></div>
+      <div style="text-align:center;font-size:12px;color:#64748b;margin-top:6px">카메라를 QR코드에 갖다대주세요</div>
+    </div>
+  </div>
+
+  <!-- 검색 -->
+  <input id="rec-search" class="inp" style="margin-bottom:12px" placeholder="🔍 세대·상태 검색..." oninput="renderRecs()">
+
+  <!-- 통계 -->
+  <div id="rec-stats" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"></div>
+
+  <!-- 목록 -->
+  <div id="rec-list"></div>
+</div>
+
+<!-- ═══ 보고서 탭 ═══ -->
+<div id="pane-report" class="pad" style="display:none">
+  <!-- PDF 기간 필터 -->
+  <div class="card">
+    <div class="ct">📄 PDF 보고서</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="abtn pdf" style="flex:1;min-width:70px;padding:8px 4px;font-size:12px" onclick="setRptPeriod('today',this)">오늘</button>
+      <button class="abtn pdf on" style="flex:1;min-width:70px;padding:8px 4px;font-size:12px" onclick="setRptPeriod('all',this)">전체</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div><label class="lbl">시작일</label><input id="rpt-range-from" type="date" class="inp" style="font-size:13px"></div>
+      <div><label class="lbl">종료일</label><input id="rpt-range-to" type="date" class="inp" style="font-size:13px"></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#475569;margin-bottom:10px">
+      <input type="checkbox" id="pdf-photo-chk" checked style="width:16px;height:16px"> 사진 포함
+    </label>
+    <button id="btn-pdf" class="abtn pdf" onclick="exportPDF()">📄 PDF 저장</button>
+    <div id="pdf-fname" style="font-size:11px;color:#94a3b8;margin-top:4px;text-align:center"></div>
+  </div>
+
+  <!-- 빈 점검표 -->
+  <div class="card">
+    <div class="ct">📋 빈 점검표</div>
+    <div style="margin-bottom:10px">
+      <label class="lbl">대상 동</label>
+      <div id="blank-dong-btns" style="display:flex;flex-wrap:wrap;gap:5px"></div>
+    </div>
+    <div id="blank-specific-area" style="display:none;margin-bottom:10px">
+      <label class="lbl">세대 추가</label>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <select id="blank-spec-dong" class="inp" style="flex:1;font-size:13px"></select>
+        <select id="blank-spec-ho" class="inp" style="flex:1;font-size:13px"></select>
+        <button onclick="addBlankUnit()" style="background:#2563eb;color:#fff;border-radius:8px;padding:0 12px;font-size:13px;font-weight:700">추가</button>
+      </div>
+      <div id="blank-unit-chips"></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#475569;margin-bottom:10px">
+      <input type="checkbox" id="blank-qr-chk" checked style="width:16px;height:16px"> QR코드 포함
+    </label>
+    <button id="btn-blank-pdf" class="abtn bk" onclick="exportBlankForm()">📋 빈 점검표 PDF 저장</button>
+  </div>
+
+  <!-- 현황 요약 -->
+  <div class="card">
+    <div class="ct">📊 점검 현황 요약</div>
+    <div id="rpt-summary"></div>
+  </div>
+</div>
+
+<!-- ═══ 내보내기 탭 ═══ -->
+<div id="pane-export" class="pad" style="display:none">
+
+  <!-- 엑셀 -->
+  <div class="card">
+    <div class="ct">📊 엑셀 내보내기</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="abtn xls" style="flex:1;min-width:70px;padding:8px 4px;font-size:12px" onclick="setXlsPeriod('today',this)">오늘</button>
+      <button class="abtn xls on" style="flex:1;min-width:70px;padding:8px 4px;font-size:12px" onclick="setXlsPeriod('all',this)">전체</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div><label class="lbl">시작일</label><input id="range-from" type="date" class="inp" style="font-size:13px"></div>
+      <div><label class="lbl">종료일</label><input id="range-to" type="date" class="inp" style="font-size:13px"></div>
+    </div>
+    <button id="btn-xls" class="abtn xls" onclick="exportXls()">📊 엑셀 저장</button>
+    <div id="xls-fname" style="font-size:11px;color:#94a3b8;margin-top:4px;text-align:center"></div>
+  </div>
+
+  <!-- JSON 백업/복원 -->
+  <div class="card">
+    <div class="ct">💾 JSON 백업 / 복원</div>
+    <div id="last-backup-info" style="border-radius:10px;padding:10px;font-size:12px;font-weight:700;margin-bottom:10px"></div>
+    <button id="btn-backup" class="abtn bk" onclick="exportBackup()">💾 백업 파일 저장</button>
+    <button id="btn-restore" class="abtn rst" onclick="document.getElementById('restore-input').click()">📥 백업 파일 불러오기</button>
+    <input id="restore-input" type="file" accept=".json" style="display:none" onchange="importBackup(this)">
+  </div>
+
+  <!-- 잠금 -->
+  <div class="card">
+    <div class="ct">🔒 화면 잠금</div>
+    <button class="abtn red" onclick="lockNow()">🔒 화면 잠금</button>
+    <button class="abtn" style="border:2px solid #64748b;color:#64748b" onclick="changePassword()">🔑 비밀번호 변경</button>
+  </div>
+
+  <!-- 정보 -->
+  <div style="text-align:center;font-size:11px;color:#94a3b8;padding:16px 0">
+    <div id="info-cnt"></div>
+    <div style="margin-top:4px">LH 공가점검 v10 · 양주율정마을7단지</div>
+  </div>
+</div>
+
+<!-- 기록 상세 모달 -->
+<div id="rec-modal" style="display:none" class="modal-bg" onclick="if(this===event.target)this.style.display='none'">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div id="rm-title" style="font-size:17px;font-weight:900"></div>
+      <button onclick="document.getElementById('rec-modal').style.display='none'" style="background:#f1f5f9;border-radius:50%;width:30px;height:30px;font-size:16px">✕</button>
+    </div>
+    <div id="rm-body"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="editRecord()" style="flex:1;padding:12px;background:#eff6ff;color:#2563eb;border-radius:10px;font-weight:800;font-size:13px">✏️ 수정</button>
+      <button onclick="deleteRecord()" style="flex:1;padding:12px;background:#fef2f2;color:#dc2626;border-radius:10px;font-weight:800;font-size:13px">🗑️ 삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- 확인 모달 -->
+<div id="confirm-modal" style="display:none" class="modal-bg">
+  <div class="modal-box">
+    <div id="cm-title" style="font-size:16px;font-weight:900;margin-bottom:8px"></div>
+    <div id="cm-body" style="font-size:13px;color:#475569;margin-bottom:20px;white-space:pre-wrap"></div>
+    <div style="display:flex;gap:8px">
+      <button id="cm-cancel" style="flex:1;padding:12px;background:#f1f5f9;color:#475569;border-radius:10px;font-weight:700;font-size:14px">취소</button>
+      <button id="cm-ok" style="flex:2;padding:12px;background:#dc2626;color:#fff;border-radius:10px;font-weight:800;font-size:14px">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 잠금 화면 -->
+<div id="lock-overlay" class="lock-overlay" style="display:none">
+  <div style="font-size:48px">🔒</div>
+  <div class="lock-box">
+    <div style="font-size:18px;font-weight:900;margin-bottom:6px;color:#1e40af">화면 잠금</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px">비밀번호를 입력하세요</div>
+    <input id="lock-pw-input" type="password" class="inp" placeholder="비밀번호" style="text-align:center;letter-spacing:4px;font-size:20px;margin-bottom:12px" onkeydown="if(event.key==='Enter')doUnlock()">
+    <button onclick="doUnlock()" style="width:100%;padding:13px;background:#1e40af;color:#fff;border-radius:12px;font-size:16px;font-weight:900">잠금 해제</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   상수 / 데이터
+═══════════════════════════════════════ */
+const LS_KEY = 'lh_v3';
+const DRAFT_KEY = 'lh_draft_v1';
+const BACKUP_DATE_KEY = 'lh_last_backup_date';
+const LOCK_PW_KEY = 'lh_lock_pw';
+const LOCK_STATE_KEY = 'lh_locked';
+const DEFAULT_PW = '1234';
+
+const BLDS={
+  '701동':{floors:13,lines:[1,2,3,4],area:29.7},
+  '702동':{floors:20,lines:[1,2,3,4,5,6,7],area:27.0},
+  '703동':{floors:20,lines:[1,2,3,4,5,6,7],area:27.0},
+  '704동':{floors:15,lines:[1,2,3,4,5,6],area:34.5},
+  '705동':{floors:11,lines:[1,2,3,4,5,6],area:27.0},
+  '706동':{floors:11,lines:[1,2,3,4],area:29.7},
+  '707동':{floors:14,lines:[1,2,3,4,5,6],skip:[[1,3],[1,4]],area:29.7},
+  '708동':{floors:13,lines:[1,2,3,4,5,6,7,8,9,10],partialFrom:11,partialLines:[9,10],area:21.2},
+  '709동':{floors:13,lines:[1,2,3,4,5,6,7,8],partialFrom:11,partialLines:[5,6,7,8],area:34.5},
+  '710동':{floors:20,lines:[1,2,3,4,5,6,7],area:27.0},
+  '711동':{floors:15,lines:[1,2,3,4],area:34.5},
+  '712동':{floors:12,lines:[1,2,3,4],area:29.7},
+  '713동':{floors:13,lines:[1,2,3,4],area:34.5},
+  '714동':{floors:20,lines:[1,2,3,4,5,6,7],area:27.0},
+};
+const DONGS = Object.keys(BLDS);
+const UNITS = (()=>{
+  const r={};
+  for(const d of DONGS){
+    const cfg=BLDS[d]; r[d]=[];
+    for(let f=1;f<=cfg.floors;f++){
+      const ls=(cfg.partialFrom&&f>=cfg.partialFrom)?cfg.partialLines:cfg.lines;
+      for(const l of ls){
+        if((cfg.skip||[]).some(s=>s[0]===f&&s[1]===l))continue;
+        r[d].push((f*100+l)+'호');
+      }
+    }
+  }
+  return r;
+})();
+
+const RESIDENT_UNITS = new Set(["701동 602호","701동 702호","701동 704호","701동 804호","701동 1004호","701동 1101호","701동 1104호","702동 201호","702동 205호","702동 402호","702동 504호","702동 702호","702동 906호","702동 1407호","702동 1507호","702동 1607호","702동 1802호","702동 1806호","702동 1807호","702동 1907호","702동 2004호","702동 2005호","702동 2007호","703동 103호","703동 204호","703동 301호","703동 302호","703동 303호","703동 307호","703동 907호","703동 1003호","703동 1004호","703동 1101호","703동 1102호","703동 1104호","703동 1106호","703동 1305호","703동 1405호","703동 1502호","703동 1702호","703동 2001호","703동 2004호","703동 2006호","704동 101호","704동 102호","704동 301호","704동 302호","704동 405호","704동 503호","704동 603호","704동 903호","704동 1304호","704동 1401호","704동 1406호","704동 1504호","705동 101호","705동 104호","705동 204호","705동 206호","705동 305호","705동 404호","705동 405호","705동 506호","705동 602호","705동 701호","705동 802호","705동 805호","705동 904호","705동 1005호","705동 1006호","706동 104호","706동 202호","706동 203호","706동 302호","706동 401호","706동 503호","706동 803호","706동 901호","706동 902호","706동 1103호","707동 106호","707동 302호","707동 305호","707동 306호","707동 406호","707동 501호","707동 505호","707동 603호","707동 605호","707동 606호","707동 805호","707동 905호","707동 906호","707동 1001호","707동 1002호","707동 1003호","707동 1005호","707동 1203호","707동 1206호","707동 1401호","708동 109호","708동 303호","708동 310호","708동 502호","708동 503호","708동 601호","708동 609호","708동 801호","708동 810호","708동 1001호","708동 1009호","708동 1307호","708동 1308호","709동 106호","709동 302호","709동 402호","709동 406호","709동 408호","709동 806호","709동 808호","709동 1001호","710동 101호","710동 201호","710동 205호","710동 207호","710동 303호","710동 306호","710동 601호","710동 605호","710동 701호","710동 704호","710동 706호","710동 1002호","710동 1005호","710동 1102호","710동 1105호","710동 1106호","710동 1407호","710동 1606호","710동 1806호","710동 2001호","710동 2006호","711동 102호","711동 301호","711동 703호","711동 803호","711동 903호","711동 1004호","711동 1101호","711동 1202호","711동 1302호","711동 1501호","712동 101호","712동 102호","712동 104호","712동 202호","712동 301호","712동 402호","712동 404호","712동 502호","712동 504호","712동 803호","712동 902호","712동 903호","713동 302호","713동 602호","713동 1001호","713동 1102호","713동 1103호","714동 201호","714동 206호","714동 303호","714동 304호","714동 407호","714동 504호","714동 603호","714동 706호","714동 903호","714동 1202호","714동 1504호","714동 1604호","714동 1607호","714동 1702호","714동 1907호"]);
+
+const UNIT_AREA = {"701동 602호":29.7,"701동 702호":29.7,"701동 704호":29.7,"701동 804호":29.7,"701동 1004호":29.7,"701동 1101호":29.7,"701동 1104호":29.7,"702동 201호":27.0,"702동 205호":21.3,"702동 402호":21.3,"702동 504호":27.0,"702동 702호":21.3,"702동 906호":21.3,"702동 1407호":27.0,"702동 1507호":27.0,"702동 1607호":27.0,"702동 1802호":21.3,"702동 1806호":21.3,"702동 1807호":27.0,"702동 1907호":27.0,"702동 2004호":27.0,"702동 2005호":21.3,"702동 2007호":27.0,"703동 103호":21.3,"703동 204호":27.0,"703동 301호":27.0,"703동 302호":21.3,"703동 303호":21.3,"703동 307호":27.0,"703동 907호":27.0,"703동 1003호":21.3,"703동 1004호":27.0,"703동 1101호":27.0,"703동 1102호":21.3,"703동 1104호":27.0,"703동 1106호":21.3,"703동 1305호":21.3,"703동 1405호":21.3,"703동 1502호":21.3,"703동 1702호":21.3,"703동 2001호":27.0,"703동 2004호":27.0,"703동 2006호":21.3,"704동 101호":29.7,"704동 102호":29.7,"704동 301호":29.7,"704동 302호":29.7,"704동 405호":27.0,"704동 503호":27.0,"704동 603호":27.0,"704동 903호":27.0,"704동 1304호":27.0,"704동 1401호":29.7,"704동 1406호":27.0,"704동 1504호":27.0,"705동 101호":27.0,"705동 104호":27.0,"705동 204호":27.0,"705동 206호":27.0,"705동 305호":27.0,"705동 404호":27.0,"705동 405호":27.0,"705동 506호":27.0,"705동 602호":27.0,"705동 701호":27.0,"705동 802호":27.0,"705동 805호":27.0,"705동 904호":27.0,"705동 1005호":27.0,"705동 1006호":27.0,"706동 104호":29.7,"706동 202호":29.7,"706동 203호":29.7,"706동 302호":29.7,"706동 401호":29.7,"706동 503호":29.7,"706동 803호":29.7,"706동 901호":29.7,"706동 902호":29.7,"706동 1103호":29.7,"707동 106호":27.0,"707동 302호":29.7,"707동 305호":27.0,"707동 306호":27.0,"707동 406호":27.0,"707동 501호":29.7,"707동 505호":27.0,"707동 603호":27.0,"707동 605호":27.0,"707동 606호":27.0,"707동 805호":27.0,"707동 905호":27.0,"707동 906호":27.0,"707동 1001호":29.7,"707동 1002호":29.7,"707동 1003호":27.0,"707동 1005호":27.0,"707동 1203호":27.0,"707동 1206호":27.0,"707동 1401호":29.7,"708동 109호":21.3,"708동 303호":21.3,"708동 310호":21.2,"708동 502호":21.3,"708동 503호":21.3,"708동 601호":21.2,"708동 609호":21.3,"708동 801호":21.2,"708동 810호":21.2,"708동 1001호":21.2,"708동 1009호":21.3,"708동 1307호":21.3,"708동 1308호":21.3,"709동 106호":17.2,"709동 302호":17.2,"709동 402호":17.2,"709동 406호":17.2,"709동 408호":21.2,"709동 806호":17.2,"709동 808호":21.2,"709동 1001호":17.2,"710동 101호":27.0,"710동 201호":27.0,"710동 205호":21.3,"710동 207호":27.0,"710동 303호":21.3,"710동 306호":21.3,"710동 601호":27.0,"710동 605호":21.3,"710동 701호":27.0,"710동 704호":27.0,"710동 706호":21.3,"710동 1002호":21.3,"710동 1005호":21.3,"710동 1102호":21.3,"710동 1105호":21.3,"710동 1106호":21.3,"710동 1407호":27.0,"710동 1606호":21.3,"710동 1806호":21.3,"710동 2001호":27.0,"710동 2006호":21.3,"711동 102호":34.5,"711동 301호":34.5,"711동 703호":34.5,"711동 803호":34.5,"711동 903호":34.5,"711동 1004호":34.5,"711동 1101호":34.5,"711동 1202호":34.5,"711동 1302호":34.5,"711동 1501호":34.5,"712동 101호":29.7,"712동 102호":29.7,"712동 104호":29.7,"712동 202호":29.7,"712동 301호":29.7,"712동 402호":29.7,"712동 404호":29.7,"712동 502호":29.7,"712동 504호":29.7,"712동 803호":29.7,"712동 902호":29.7,"712동 903호":29.7,"713동 302호":34.5,"713동 602호":34.5,"713동 1001호":34.5,"713동 1102호":34.5,"713동 1103호":34.5,"714동 201호":27.0,"714동 206호":21.3,"714동 303호":21.3,"714동 304호":27.0,"714동 407호":27.0,"714동 504호":27.0,"714동 603호":21.3,"714동 706호":21.3,"714동 903호":21.3,"714동 1202호":21.3,"714동 1504호":27.0,"714동 1604호":27.0,"714동 1607호":27.0,"714동 1702호":21.3,"714동 1907호":27.0};
+
+const AREA_LABEL = {17.2:'29A(13평)',21.2:'36A(16평)',21.3:'36B(16평)',27.0:'46A(19평)',29.7:'51A(21평)',34.5:'59A(24평)'};
+const AREA_COLOR = {17.2:{bg:'#fde68a',bd:'#f59e0b'},21.2:{bg:'#bfdbfe',bd:'#3b82f6'},21.3:{bg:'#a5f3fc',bd:'#06b6d4'},27.0:{bg:'#bbf7d0',bd:'#22c55e'},29.7:{bg:'#fecaca',bd:'#ef4444'},34.5:{bg:'#e9d5ff',bd:'#a855f7'}};
+
+const CHKDEF = {
+  '현관및거실':['현관문(도어록/클로저)','전등(점등/깜빡임)','인터폰(관리실/현관)','바닥·벽지(찍힘/오염/들뜸)'],
+  '주방':['싱크대수전(수압/누수/배수)','주방후드(소음/흡입력)','상하부장(수평/경첩소음)'],
+  '욕실및베란다':['양변기(물내림/균열)','세면대·욕조(배수/실리콘)','타일(깨짐/들뜸)','베란다(배수구오물)','봉수확인(냄새/넘침)','변기물탱크(수압/누수)'],
+  '기타':['창호(개폐/잠금장치)','난방공급확인(보일러)'],
+};
+const CHKDESC = {
+  '현관문(도어록/클로저)':'도어록 작동, 문닫힘 속도(도어클로저), 호수판 부착',
+  '전등(점등/깜빡임)':'거실·통로 점등 여부, 깜빡임 확인',
+  '인터폰(관리실/현관)':'관리실 및 공동현관 호출·통화 정상 작동',
+  '바닥·벽지(찍힘/오염/들뜸)':'찍힘, 오염, 들뜸 현상 유무',
+  '싱크대수전(수압/누수/배수)':'냉·온수 수압, 누수 및 배수 원활 여부',
+  '주방후드(소음/흡입력)':'작동 소음 및 흡입력 확인',
+  '상하부장(수평/경첩소음)':'문짝 수평 및 경첩 소음 확인',
+  '양변기(물내림/균열)':'물내림 상태 및 하부 백시멘트 균열 여부',
+  '세면대·욕조(배수/실리콘)':'배수 속도 및 실리콘 마감 상태',
+  '타일(깨짐/들뜸)':'깨짐·들뜸(중공음) 현상 유무',
+  '베란다(배수구오물)':'배수구 오물 유무',
+  '봉수확인(냄새/넘침)':'봉수 상태 확인',
+  '변기물탱크(수압/누수)':'물탱크 수압 및 누수 확인',
+  '창호(개폐/잠금장치)':'창문 개폐 원활, 잠금장치(크리센트) 작동',
+  '난방공급확인(보일러)':'가동 소음 및 난방 공급 확인',
+};
+const CHKSEC_ICON = {'현관및거실':'🚪','주방':'🍳','욕실및베란다':'🚿','기타':'🔧'};
+
+const METERS = ['전기','수도','온수','난방','가스'];
+const MUNITS = {전기:'kWh',수도:'m³',온수:'m³',난방:'Gcal',가스:'m³'};
+const SC = {
+  '점검전':{bg:'#f1f5f9',fg:'#475569',bd:'#e2e8f0'},
+  '입주가능':{bg:'#f0fdf4',fg:'#15803d',bd:'#86efac'},
+  '수리중':{bg:'#fff7ed',fg:'#c2410c',bd:'#fed7aa'},
+  '하자있음':{bg:'#fef2f2',fg:'#dc2626',bd:'#fecaca'},
+  '입주청소전':{bg:'#eff6ff',fg:'#1d4ed8',bd:'#bfdbfe'}
+};
+const TYPES = Array.from({length:20},(_,i)=>`${i+1}차`);
+
+/* ═══ 앱 상태 ═══ */
+let records = [], sessIds = new Set();
+let selDong = DONGS[0], selUnit = '';
+let fChecks = {}, fPhotos = [], fMeter = {}, fStatus = '점검전';
+let _draftTimer = null;
+let _recModalId = null;
+let _xlsPeriod = 'all', _rptPeriod = 'all';
+let _blankDong = '전체', _blankUnits = [];
+let _qrStream = null, _qrAnim = null;
+
+/* ═══ localStorage ═══ */
+function saveLS(){try{localStorage.setItem(LS_KEY,JSON.stringify({records}));}catch(e){}}
+function loadLS(){try{const d=localStorage.getItem(LS_KEY);if(!d)return;const p=JSON.parse(d);records=p.records||[];}catch(e){}}
+
+/* ═══ 유틸 ═══ */
+function toast(msg,ms=2500){const e=document.getElementById('toast');e.textContent=msg;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),ms);}
+function pad2(n){return String(n).padStart(2,'0');}
+function now8(){const n=new Date();return n.getFullYear()+pad2(n.getMonth()+1)+pad2(n.getDate())+'_'+pad2(n.getHours())+pad2(n.getMinutes())+pad2(n.getSeconds());}
+function vacDays(d){if(!d)return null;return Math.floor((Date.now()-new Date(d))/86400000);}
+function vacMonths(d){if(!d)return null;const s=new Date(d),n=new Date();let m=(n.getFullYear()-s.getFullYear())*12+(n.getMonth()-s.getMonth());if(n.getDate()<s.getDate())m--;return m<0?0:m;}
+function sv(v){return v===null||v===undefined?'':String(v);}
+
+function showConfirm(title,body,onOk){
+  document.getElementById('cm-title').textContent=title;
+  document.getElementById('cm-body').textContent=body;
+  document.getElementById('confirm-modal').style.display='flex';
+  document.getElementById('cm-ok').onclick=()=>{document.getElementById('confirm-modal').style.display='none';onOk();};
+  document.getElementById('cm-cancel').onclick=()=>document.getElementById('confirm-modal').style.display='none';
+}
+
+function updBadge(){
+  document.getElementById('hdr-badge').textContent=records.length+'건 · 세션 '+sessIds.size+'건';
+  document.getElementById('hdr-vbadge').textContent='공가 '+Object.keys(UNIT_AREA).length+'세대';
+}
+
+function renderVacInfo(){
+  const box=document.getElementById('vac-info-box');
+  if(!box)return;
+  const vac=document.getElementById('f-vac')?.value;
+  if(!vac){box.innerHTML='';return;}
+  const days=vacDays(vac),months=vacMonths(vac);
+  box.innerHTML=`<span style="background:#fef9c3;color:#854d0e;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700">공가 ${days}일 (약 ${months}개월)</span>`;
+}
+
+/* ═══ 탭 ═══ */
+function switchTab(t){
+  ['form','dash','records','report','export'].forEach(x=>{
+    document.getElementById('pane-'+x).style.display=x===t?'block':'none';
+    document.getElementById('tab-'+x).classList.toggle('on',x===t);
+  });
+  if(t==='records')renderRecs();
+  if(t==='dash')renderDash();
+  if(t==='report')renderRptSummary();
+  if(t==='export'){renderLastBackupInfo();document.getElementById('info-cnt').textContent='📋 총 기록: '+records.length+'건';}
+}
+
+/* ═══ 점검 폼 ═══ */
+function initChk(){const r={};for(const s of Object.keys(CHKDEF)){r[s]={};for(const n of CHKDEF[s])r[s][n]='정상';}return r;}
+function initMtr(){const r={};for(const m of METERS)r[m]={p:'',c:''};return r;}
+
+function renderDongs(){
+  const w=document.getElementById('dong-wrap');
+  w.innerHTML=DONGS.map(d=>`<button class="dong-btn${d===selDong?' on':''}" onclick="pickDong('${d}')">${d}</button>`).join('');
+}
+
+function pickDong(d){
+  selDong=d; selUnit='';
+  showFormBody(false);
+  renderDongs(); renderUnits();
+}
+
+function renderUnits(){
+  const vac=UNIT_AREA;
+  const dongVac=Object.keys(vac).filter(u=>u.startsWith(selDong));
+  const total=dongVac.length;
+  const done=dongVac.filter(u=>records.some(r=>r.unit===u)).length;
+  document.getElementById('dong-unit-count').textContent=`총 ${total}세대 · 완료 ${done}세대`;
+  const g=document.getElementById('unit-grid');
+  g.innerHTML=dongVac.map(u=>{
+    const ho=u.split(' ')[1];
+    const rec=records.filter(r=>r.unit===u);
+    const st=rec.length?rec[rec.length-1].status:'점검전';
+    const sel=u===selUnit?' sel':'';
+    return `<button class="u-btn s${st}${sel}" onclick="pickUnit('${ho}')">${ho}${rec.length?`<span style="position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:#16a34a"></span>`:''}</button>`;
+  }).join('');
+}
+
+function pickUnit(ho){
+  selUnit=selDong+' '+ho;
+  renderUnits();
+  // 폼 초기화
+  fChecks=initChk(); fPhotos=[]; fMeter=initMtr(); fStatus='점검전';
+  // 기존 기록 있으면 마지막 값 불러오기
+  const prev=records.filter(r=>r.unit===selUnit);
+  if(prev.length){
+    const last=prev[prev.length-1];
+    fChecks=last.checks?JSON.parse(JSON.stringify(last.checks)):initChk();
+    fMeter=last.meter?JSON.parse(JSON.stringify(last.meter)):initMtr();
+    fStatus=last.status||'점검전';
+    document.getElementById('f-vac').value=last.vacDate||'';
+    document.getElementById('f-inspector').value=last.inspector||'';
+  } else {
+    document.getElementById('f-vac').value='';
+    document.getElementById('f-inspector').value='';
+  }
+  // 날짜/차수
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  const nextT=prev.length?TYPES[Math.min(TYPES.indexOf(prev[prev.length-1].type)+1,TYPES.length-1)]:'1차';
+  const sel=document.getElementById('f-type');
+  sel.innerHTML=TYPES.map(t=>`<option value="${t}"${t===nextT?' selected':''}>${t}</option>`).join('');
+  document.getElementById('f-notes').value='';
+  renderSelInfo(); renderChks(); renderMtr(); renderStatus(); renderPhotos(); renderVacInfo();
+  showFormBody(true);
+  startDraftTimer();
+  document.getElementById('form-body').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function showFormBody(show){
+  document.getElementById('form-body').style.display=show?'block':'none';
+}
+
+function renderSelInfo(){
+  if(!selUnit)return;
+  const area=UNIT_AREA[selUnit];
+  const ac=AREA_COLOR[area];
+  document.getElementById('sel-unit-name').textContent=selUnit;
+  document.getElementById('sel-unit-sub').textContent=area?AREA_LABEL[area]:'';
+  if(ac) document.getElementById('sel-unit-name').style.color='#1e40af';
+  const recCnt=records.filter(r=>r.unit===selUnit).length;
+  document.getElementById('sel-type-badge').textContent=recCnt?recCnt+'차 완료':'미점검';
+}
+
+function renderChks(){
+  const body=document.getElementById('chk-body');
+  body.innerHTML=Object.entries(CHKDEF).map(([sec,items])=>`
+    <div style="margin-bottom:12px">
+      <div class="sec-hdr"><span style="font-size:13px;font-weight:800">${CHKSEC_ICON[sec]||''} ${sec}</span><div class="sec-div"></div></div>
+      <div style="display:grid;gap:6px">
+        ${items.map(n=>{
+          const val=fChecks[sec]?.[n]||'정상';
+          return `<div class="chk-row">
+            <div>
+              <div class="chk-name">${n}</div>
+              ${CHKDESC[n]?`<div style="font-size:10px;color:#94a3b8;margin-top:2px">${CHKDESC[n]}</div>`:''}
+            </div>
+            <div class="chk-grp">
+              ${['정상','이상','긴급'].map(v=>`<button class="chk-btn${v!=='정상'?' '+v:''}" style="${val===v?'outline:2px solid #1d4ed8;':''}" onclick="setChk('${sec}','${n}','${v}')">${v}</button>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function setChk(sec,name,val){
+  if(!fChecks[sec])fChecks[sec]={};
+  fChecks[sec][name]=val;
+  renderChks();
+  saveDraft();
+}
+
+function renderStatus(){
+  document.getElementById('st-row').innerHTML=Object.entries(SC).map(([st,c])=>`
+    <button class="st-btn${fStatus===st?' on':''}"
+      style="background:${c.bg};color:${c.fg};border-color:${c.bd}"
+      onclick="setStatus('${st}')">${st}</button>`).join('');
+}
+
+function setStatus(st){fStatus=st;renderStatus();saveDraft();}
+
+function renderMtr(){
+  document.getElementById('mtr-body').innerHTML=`<div style="display:grid;gap:8px">
+    ${METERS.map(m=>`<div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:12px;font-weight:700;color:#475569;min-width:32px">${m}</span>
+      <input class="inp" placeholder="이전(${MUNITS[m]})" value="${fMeter[m]?.p||''}" style="flex:1;font-size:13px;padding:8px 10px" oninput="fMeter['${m}'].p=this.value;saveDraft()">
+      <input class="inp" placeholder="현재(${MUNITS[m]})" value="${fMeter[m]?.c||''}" style="flex:1;font-size:13px;padding:8px 10px" oninput="fMeter['${m}'].c=this.value;saveDraft()">
+    </div>`).join('')}
+  </div>`;
+}
+
+async function addPhotos(input){
+  const files=Array.from(input.files);
+  for(const f of files){
+    const url=await compressPhoto(f);
+    fPhotos.push({id:Date.now()+'_'+Math.random().toString(36).slice(2),url});
+    renderPhotos();
+  }
+  input.value='';
+  saveDraft();
+}
+
+function compressPhoto(file){
+  return new Promise(res=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const MAX=1024;
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){const r=Math.min(MAX/w,MAX/h);w=Math.round(w*r);h=Math.round(h*r);}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',0.75));
+    };
+    img.src=url;
+  });
+}
+
+function renderPhotos(){
+  document.getElementById('photo-count').textContent=fPhotos.length+'장';
+  document.getElementById('photo-grid').innerHTML=fPhotos.map(p=>`
+    <div class="photo-cell">
+      <img src="${p.url}" loading="lazy">
+      <button class="photo-del" onclick="delPhoto('${p.id}')">✕</button>
+    </div>`).join('');
+}
+
+function delPhoto(id){fPhotos=fPhotos.filter(p=>p.id!==id);renderPhotos();saveDraft();}
+
+function saveRecord(){
+  if(!selUnit){toast('⚠️ 세대를 먼저 선택해주세요');return;}
+  const issues=[];
+  for(const sec of Object.keys(fChecks))for(const n of Object.keys(fChecks[sec])){
+    if(fChecks[sec][n]!=='정상')issues.push(n+'('+fChecks[sec][n]+')');
+  }
+  const rec={
+    id:Date.now()+'_'+Math.random().toString(36).slice(2),
+    unit:selUnit,
+    date:document.getElementById('f-date').value,
+    type:document.getElementById('f-type').value,
+    vacDate:document.getElementById('f-vac').value,
+    status:fStatus,
+    inspector:document.getElementById('f-inspector').value,
+    notes:document.getElementById('f-notes').value,
+    checks:JSON.parse(JSON.stringify(fChecks)),
+    meter:JSON.parse(JSON.stringify(fMeter)),
+    photos:[...fPhotos],
+    issues:issues.join(', '),
+    savedAt:new Date().toISOString()
+  };
+  records.push(rec);
+  sessIds.add(rec.id);
+  saveLS();
+  clearDraft();
+  stopDraftTimer();
+  updBadge();
+  renderUnits();
+  toast('✅ '+selUnit+' 점검 저장 완료!');
+  showFormBody(false);
+  selUnit='';
+  renderDongs();
+}
+
+/* ═══ 임시저장 ═══ */
+function saveDraft(){
+  if(!selUnit)return;
+  try{
+    const draft={selDong,selUnit,date:document.getElementById('f-date')?.value||'',type:document.getElementById('f-type')?.value||'',notes:document.getElementById('f-notes')?.value||'',vac:document.getElementById('f-vac')?.value||'',inspector:document.getElementById('f-inspector')?.value||'',checks:JSON.parse(JSON.stringify(fChecks)),meter:JSON.parse(JSON.stringify(fMeter)),photos:fPhotos.map(p=>({id:p.id,url:p.url})),status:fStatus,savedAt:new Date().toISOString()};
+    localStorage.setItem(DRAFT_KEY,JSON.stringify(draft));
+  }catch(e){}
+}
+function clearDraft(){localStorage.removeItem(DRAFT_KEY);}
+function startDraftTimer(){
+  stopDraftTimer();
+  _draftTimer=setInterval(()=>{if(selUnit){saveDraft();const el=document.getElementById('draft-indicator');if(el){el.style.opacity='1';setTimeout(()=>el.style.opacity='0',2000);}}},30000);
+}
+function stopDraftTimer(){if(_draftTimer){clearInterval(_draftTimer);_draftTimer=null;}}
+function checkDraftRestore(){
+  try{
+    const raw=localStorage.getItem(DRAFT_KEY);
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    if(!d.selUnit)return false;
+    const mins=Math.round((Date.now()-new Date(d.savedAt))/60000);
+    const timeStr=mins<60?`${mins}분 전`:`${Math.round(mins/60)}시간 전`;
+    showConfirm('📋 이전 작업 이어하기?',`${d.selDong} ${d.selUnit}\n${timeStr} 자동저장 · 사진 ${d.photos?.length||0}장\n\n복구하면 이어서 입력할 수 있어요.\n취소하면 임시저장이 삭제됩니다.`,()=>restoreDraft(d));
+    document.getElementById('cm-cancel').onclick=()=>{clearDraft();document.getElementById('confirm-modal').style.display='none';setTimeout(checkBackupAlert,400);};
+    return true;
+  }catch(e){clearDraft();return false;}
+}
+function restoreDraft(d){
+  try{
+    selDong=d.selDong; selUnit=d.selUnit;
+    fChecks=d.checks||initChk(); fMeter=d.meter||initMtr(); fPhotos=d.photos||[]; fStatus=d.status||'점검전';
+    setTimeout(()=>{
+      document.getElementById('f-date')&&(document.getElementById('f-date').value=d.date);
+      document.getElementById('f-type')&&(document.getElementById('f-type').value=d.type);
+      document.getElementById('f-notes')&&(document.getElementById('f-notes').value=d.notes);
+      document.getElementById('f-vac')&&(document.getElementById('f-vac').value=d.vac);
+      document.getElementById('f-inspector')&&(document.getElementById('f-inspector').value=d.inspector||'');
+      renderDongs();renderUnits();renderChks();renderMtr();renderStatus();renderPhotos();renderSelInfo();renderVacInfo();
+      showFormBody(true); startDraftTimer(); toast('✅ 작업 복구 완료!');
+    },100);
+  }catch(e){toast('❌ 복구 실패');}
+}
+
+/* ═══ 현황 탭 ═══ */
+function renderDash(){
+  const vacList=Object.keys(UNIT_AREA);
+  const total=vacList.length;
+  const done=vacList.filter(u=>records.some(r=>r.unit===u)).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('dash-pct').textContent=pct+'%';
+  document.getElementById('dash-cnt').textContent=done+' / '+total+' 세대 완료';
+  document.getElementById('dash-bar').style.width=pct+'%';
+  const undone=vacList.filter(u=>!records.some(r=>r.unit===u));
+  document.getElementById('dash-untouched').textContent=`미점검 ${undone.length}세대 남음`;
+
+  // 동별
+  document.getElementById('dash-dong-list').innerHTML=DONGS.map(dong=>{
+    const dVac=vacList.filter(u=>u.startsWith(dong));
+    if(!dVac.length)return '';
+    const dDone=dVac.filter(u=>records.some(r=>r.unit===u)).length;
+    const dPct=Math.round(dDone/dVac.length*100);
+    const color=dPct===100?'#16a34a':dPct>50?'#2563eb':'#f97316';
+    const panelId='dp-'+dong.replace('동','');
+    const chips=dVac.map(u=>{
+      const ho=u.split(' ')[1];
+      const isDone=records.some(r=>r.unit===u);
+      return `<button onclick="jumpToUnit('${u}')" style="background:${isDone?'#f0fdf4':'#fff'};border:1.5px solid ${isDone?'#86efac':'#e2e8f0'};border-radius:7px;padding:3px 7px;font-size:11px;font-weight:700;color:#1e293b;cursor:pointer">${isDone?'✅':''}${ho}</button>`;
+    }).join('');
+    return `<div style="margin-bottom:8px">
+      <div onclick="(()=>{const p=document.getElementById('${panelId}');p.style.display=p.style.display==='none'?'flex':'none'})()" style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;cursor:pointer;padding:6px 4px;border-radius:8px" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+        <span>${dong} <span style="font-size:10px;color:#94a3b8">▼ 탭하면 세대 목록</span></span>
+        <span style="color:${color}">${dDone}/${dVac.length} (${dPct}%)</span>
+      </div>
+      <div style="background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden;margin-bottom:4px">
+        <div style="height:100%;background:${color};border-radius:99px;width:${dPct}%;transition:width .4s"></div>
+      </div>
+      <div id="${panelId}" style="display:none;flex-wrap:wrap;gap:4px;padding:4px 0">${chips}</div>
+    </div>`;
+  }).join('');
+
+  // 미점검 목록
+  const byDong={};
+  undone.forEach(u=>{const d=u.split(' ')[0];if(!byDong[d])byDong[d]=[];byDong[d].push(u);});
+  document.getElementById('dash-unlist').innerHTML=Object.entries(byDong).map(([dong,units])=>`
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:4px">${dong} (${units.length}세대)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${units.map(u=>`<button onclick="jumpToUnit('${u}')" style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:7px;padding:3px 7px;font-size:11px;font-weight:700;color:#475569;cursor:pointer">${u.split(' ')[1]}</button>`).join('')}</div>
+    </div>`).join('')||'<div style="text-align:center;color:#16a34a;font-weight:700;padding:16px">🎉 모든 세대 점검 완료!</div>';
+}
+
+function jumpToUnit(u){
+  const[dong,ho]=u.split(' ');
+  selDong=dong; selUnit='';
+  switchTab('form');
+  setTimeout(()=>pickUnit(ho),150);
+}
+
+/* ═══ 기록 탭 ═══ */
+function getFilteredRecs(period, fromId, toId){
+  const from=document.getElementById(fromId)?.value;
+  const to=document.getElementById(toId)?.value;
+  return records.filter(r=>{
+    const d=r.date||'';
+    if(period==='today'){const t=new Date().toISOString().slice(0,10);return d===t;}
+    if(period==='range'){return(!from||d>=from)&&(!to||d<=to);}
+    return true;
+  });
+}
+
+function renderRecs(){
+  const q=(document.getElementById('rec-search')?.value||'').toLowerCase();
+  let recs=records.filter(r=>!q||(r.unit||'').toLowerCase().includes(q)||(r.status||'').includes(q)||(r.notes||'').toLowerCase().includes(q)||(r.inspector||'').toLowerCase().includes(q));
+  recs=[...recs].reverse();
+
+  // 통계
+  const stats={};
+  Object.keys(SC).forEach(s=>stats[s]=0);
+  records.forEach(r=>stats[r.status]=(stats[r.status]||0)+1);
+  document.getElementById('rec-stats').innerHTML=Object.entries(stats).filter(([,v])=>v>0).map(([s,v])=>`<span class="rbdg" style="background:${SC[s].bg};color:${SC[s].fg};border:1px solid ${SC[s].bd}">${s} ${v}</span>`).join('');
+
+  document.getElementById('rec-list').innerHTML=recs.length
+    ?recs.map(r=>{
+      const sc=SC[r.status]||SC['점검전'];
+      return `<div class="rec-card" onclick="showRecModal('${r.id}')">
+        <div class="rec-hd">
+          <div class="rec-unit">${r.unit}</div>
+          <div class="rec-date">${r.date} · ${r.type}</div>
+        </div>
+        <div class="rec-badges">
+          <span class="rbdg" style="background:${sc.bg};color:${sc.fg};border:1px solid ${sc.bd}">${r.status}</span>
+          ${r.issues?`<span class="rbdg" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca">⚠️ ${r.issues.split(',').length}건</span>`:''}
+          ${r.photos?.length?`<span class="rbdg" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd">📸 ${r.photos.length}장</span>`:''}
+          ${r.inspector?`<span class="rbdg" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0">👤 ${r.inspector}</span>`:''}
+        </div>
+      </div>`;
+    }).join('')
+    :'<div style="text-align:center;color:#94a3b8;padding:32px;font-weight:700">기록이 없어요</div>';
+}
+
+function showRecModal(id){
+  const r=records.find(x=>x.id===id);
+  if(!r)return;
+  _recModalId=id;
+  document.getElementById('rm-title').textContent=r.unit+' · '+r.type;
+  const sc=SC[r.status]||SC['점검전'];
+  let html=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <span class="rbdg" style="background:${sc.bg};color:${sc.fg};border:1px solid ${sc.bd}">${r.status}</span>
+    <span class="rbdg" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0">📅 ${r.date}</span>
+    ${r.inspector?`<span class="rbdg" style="background:#f1f5f9;color:#475569;border:1px solid #e2e8f0">👤 ${r.inspector}</span>`:''}
+  </div>`;
+  if(r.vacDate)html+=`<div style="font-size:12px;font-weight:700;color:#854d0e;background:#fef9c3;border-radius:8px;padding:6px 10px;margin-bottom:10px">공가시작: ${r.vacDate} · ${vacDays(r.vacDate)}일 경과</div>`;
+  if(r.issues)html+=`<div style="font-size:12px;font-weight:700;color:#dc2626;background:#fef2f2;border-radius:8px;padding:8px 10px;margin-bottom:10px">⚠️ 이상항목: ${r.issues}</div>`;
+  // 점검항목
+  if(r.checks){
+    html+=`<div style="margin-bottom:10px">`;
+    for(const[sec,items] of Object.entries(r.checks)){
+      const abnormal=Object.entries(items).filter(([,v])=>v!=='정상');
+      if(!abnormal.length)continue;
+      html+=`<div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:4px">${CHKSEC_ICON[sec]||''} ${sec}</div>`;
+      html+=abnormal.map(([n,v])=>`<div style="font-size:12px;padding:4px 8px;background:#fff7ed;border-radius:6px;margin-bottom:3px">${n}: <b>${v}</b></div>`).join('');
+    }
+    html+=`</div>`;
+  }
+  // 계량기
+  if(r.meter){
+    const mtrItems=METERS.filter(m=>r.meter[m]?.p||r.meter[m]?.c);
+    if(mtrItems.length){
+      html+=`<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:4px">📊 계량기</div>`;
+      html+=mtrItems.map(m=>`<div style="font-size:12px;padding:3px 8px;background:#f8fafc;border-radius:6px;margin-bottom:2px">${m}: ${r.meter[m].p||'-'} → ${r.meter[m].c||'-'} ${MUNITS[m]}</div>`).join('');
+      html+=`</div>`;
+    }
+  }
+  if(r.notes)html+=`<div style="font-size:13px;background:#f8fafc;border-radius:8px;padding:8px 10px;margin-bottom:10px;white-space:pre-wrap">${r.notes}</div>`;
+  if(r.photos?.length){
+    html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">`;
+    html+=r.photos.map(p=>`<div style="aspect-ratio:1;border-radius:8px;overflow:hidden"><img src="${p.url}" style="width:100%;height:100%;object-fit:cover"></div>`).join('');
+    html+=`</div>`;
+  }
+  document.getElementById('rm-body').innerHTML=html;
+  document.getElementById('rec-modal').style.display='flex';
+}
+
+function editRecord(){
+  const r=records.find(x=>x.id===_recModalId);
+  if(!r)return;
+  document.getElementById('rec-modal').style.display='none';
+  jumpToUnit(r.unit);
+  setTimeout(()=>{
+    fChecks=r.checks?JSON.parse(JSON.stringify(r.checks)):initChk();
+    fMeter=r.meter?JSON.parse(JSON.stringify(r.meter)):initMtr();
+    fPhotos=r.photos?[...r.photos]:[];
+    fStatus=r.status||'점검전';
+    document.getElementById('f-date').value=r.date||'';
+    document.getElementById('f-notes').value=r.notes||'';
+    document.getElementById('f-vac').value=r.vacDate||'';
+    document.getElementById('f-inspector').value=r.inspector||'';
+    const sel=document.getElementById('f-type');
+    for(const o of sel.options)if(o.value===r.type)o.selected=true;
+    renderChks();renderMtr();renderStatus();renderPhotos();renderVacInfo();
+    // 기존 기록 삭제
+    records=records.filter(x=>x.id!==_recModalId);
+    sessIds.delete(_recModalId);
+    saveLS(); updBadge(); renderUnits();
+    toast('✏️ 수정 모드 - 다시 저장해주세요');
+  },500);
+}
+
+function deleteRecord(){
+  document.getElementById('rec-modal').style.display='none';
+  const r=records.find(x=>x.id===_recModalId);
+  if(!r)return;
+  showConfirm('🗑️ 기록 삭제',r.unit+' '+r.type+' 기록을 삭제할까요?',()=>{
+    records=records.filter(x=>x.id!==_recModalId);
+    sessIds.delete(_recModalId);
+    saveLS(); updBadge(); renderRecs(); renderUnits();
+    toast('🗑️ 삭제 완료');
+  });
+}
+
+/* ═══ QR 스캔 ═══ */
+function toggleQrScan(){
+  const area=document.getElementById('qr-scan-area');
+  if(area.style.display==='none'){
+    area.style.display='block';
+    document.getElementById('btn-qr-scan').textContent='✕ 스캔 닫기';
+    startQrScan();
+  } else {
+    stopQrScan();
+    area.style.display='none';
+    document.getElementById('btn-qr-scan').textContent='📷 QR코드 스캔';
+  }
+}
+
+async function startQrScan(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    _qrStream=stream;
+    const video=document.getElementById('qr-video');
+    video.srcObject=stream;
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
+    function scan(){
+      if(!_qrStream){return;}
+      if(video.readyState===video.HAVE_ENOUGH_DATA){
+        canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+        ctx.drawImage(video,0,0);
+        const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+        const code=jsQR(img.data,img.width,img.height);
+        if(code?.data){
+          stopQrScan();
+          document.getElementById('qr-scan-area').style.display='none';
+          document.getElementById('btn-qr-scan').textContent='📷 QR코드 스캔';
+          handleQrResult(code.data);
+          return;
+        }
+      }
+      _qrAnim=requestAnimationFrame(scan);
+    }
+    _qrAnim=requestAnimationFrame(scan);
+  }catch(e){toast('❌ 카메라 오류: '+e.message);}
+}
+
+function stopQrScan(){
+  if(_qrAnim){cancelAnimationFrame(_qrAnim);_qrAnim=null;}
+  if(_qrStream){_qrStream.getTracks().forEach(t=>t.stop());_qrStream=null;}
+}
+
+function handleQrResult(url){
+  try{
+    const p=new URL(url).searchParams;
+    const dong=p.get('dong'),unit=p.get('unit');
+    if(dong&&unit){toast('📷 QR 인식: '+dong+' '+unit);setTimeout(()=>jumpToUnit(dong+' '+unit),500);}
+    else toast('⚠️ QR 정보를 인식했지만 세대 정보가 없어요');
+  }catch(e){toast('⚠️ QR 인식 완료 (URL 파싱 실패)');}
+}
+
+/* ═══ 보고서 ═══ */
+function setRptPeriod(p,btn){
+  _rptPeriod=p;
+  document.querySelectorAll('#pane-report .abtn.pdf').forEach(b=>b.classList.remove('on'));
+  btn?.classList.add('on');
+}
+
+function renderRptSummary(){
+  const el=document.getElementById('rpt-summary');
+  const vacList=Object.keys(UNIT_AREA);
+  const total=vacList.length;
+  const done=vacList.filter(u=>records.some(r=>r.unit===u)).length;
+  const bySt={};
+  records.forEach(r=>bySt[r.status]=(bySt[r.status]||0)+1);
+  el.innerHTML=`
+    <div class="rpt-st"><span>총 공가세대</span><b>${total}세대</b></div>
+    <div class="rpt-st"><span>점검완료</span><b>${done}세대 (${Math.round(done/total*100)}%)</b></div>
+    <div class="rpt-st"><span>미점검</span><b>${total-done}세대</b></div>
+    ${Object.entries(bySt).map(([s,v])=>`<div class="rpt-st"><span style="color:${SC[s]?.fg||'#1e293b'}">${s}</span><b>${v}건</b></div>`).join('')}
+    <div class="rpt-st"><span>총 기록수</span><b>${records.length}건</b></div>`;
+}
+
+async function exportPDF(){
+  const recs=getFilteredRecs(_rptPeriod,'rpt-range-from','rpt-range-to');
+  if(!recs.length){toast('⚠️ 해당 기간 기록이 없어요');return;}
+  const withPhoto=document.getElementById('pdf-photo-chk').checked;
+  const btn=document.getElementById('btn-pdf');
+  btn.textContent='⏳ 생성 중...'; btn.disabled=true;
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    let first=true;
+    for(const r of recs){
+      if(!first)doc.addPage();
+      first=false;
+      await buildPDF(doc,r,withPhoto);
+    }
+    const fn='LH점검보고서_'+now8()+'.pdf';
+    doc.save(fn);
+    document.getElementById('pdf-fname').textContent=fn;
+    btn.textContent='✅ 저장 완료!'; btn.className='abtn done';
+    setTimeout(()=>{btn.textContent='📄 PDF 저장';btn.className='abtn pdf';btn.disabled=false;},4000);
+    toast('📄 PDF 저장 완료! '+recs.length+'건');
+  }catch(e){console.error(e);toast('❌ PDF 오류: '+e.message);btn.textContent='📄 PDF 저장';btn.className='abtn pdf';btn.disabled=false;}
+}
+
+async function buildPDF(doc,r,withPhoto=true){
+  const M=14,CW=182; let y=M;
+  function line(h=0.5){doc.setDrawColor(220,220,220);doc.line(M,y,M+CW,y);y+=h+1;}
+  function txt(text,{x=M,fs=10,bold=false,color=[30,41,59]}={}){
+    doc.setFontSize(fs);doc.setFont('helvetica',bold?'bold':'normal');doc.setTextColor(...color);
+    doc.text(text,x,y);
+  }
+  function box(text,{x=M,w=CW,bg=[241,245,249],fg=[71,85,105],fs=10,bold=false,pad=3}={}){
+    doc.setFillColor(...bg);doc.roundedRect(x,y-pad-1,w,fs*0.45+pad*2,2,2,'F');
+    doc.setFontSize(fs);doc.setFont('helvetica',bold?'bold':'normal');doc.setTextColor(...fg);doc.text(text,x+3,y);
+  }
+  // 헤더
+  doc.setFillColor(37,99,235);doc.rect(M,y-4,CW,14,'F');
+  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('LH 공가점검 보고서',M+3,y+5);
+  doc.setFontSize(9);doc.text('양주율정마을7단지',M+CW-3,y+5,{align:'right'});
+  y+=14;
+
+  // 세대정보
+  doc.setFillColor(239,246,255);doc.rect(M,y,CW,10,'F');
+  txt(r.unit||'',{fs:13,bold:true,color:[30,64,175]});y+=5;
+  txt((r.date||'')+' · '+( r.type||'')+' · '+(r.inspector||''),{fs:9,color:[100,116,139]});y+=7;
+  line();
+
+  // 상태
+  const sc=SC[r.status]||SC['점검전'];
+  doc.setFillColor(...hexToRgb(sc.bg));doc.roundedRect(M,y,CW,8,2,2,'F');
+  txt('종합상태: '+r.status,{fs:10,bold:true,color:hexToRgb(sc.fg)});y+=10;
+
+  if(r.vacDate){txt('공가시작: '+r.vacDate+' ('+vacDays(r.vacDate)+'일 경과)',{fs:9,color:[133,77,14]});y+=6;}
+
+  // 점검항목
+  if(r.checks){
+    y+=2; txt('■ 점검항목',{fs:11,bold:true}); y+=6;
+    for(const[sec,items] of Object.entries(r.checks)){
+      txt(CHKSEC_ICON[sec]+' '+sec,{fs:9,bold:true,color:[71,85,105]});y+=5;
+      for(const[n,v] of Object.entries(items)){
+        const col=v==='정상'?[100,116,139]:v==='긴급'?[220,38,38]:[194,65,12];
+        txt('  '+n+': '+v,{fs:8.5,color:col});y+=4.5;
+      }
+    }
+  }
+
+  // 계량기
+  if(r.meter){
+    const mItems=METERS.filter(m=>r.meter[m]?.p||r.meter[m]?.c);
+    if(mItems.length){
+      y+=2;txt('■ 계량기',{fs:11,bold:true});y+=6;
+      mItems.forEach(m=>{txt('  '+m+': '+( r.meter[m].p||'-')+' → '+(r.meter[m].c||'-')+' '+MUNITS[m],{fs:8.5,color:[71,85,105]});y+=4.5;});
+    }
+  }
+
+  if(r.notes){y+=2;txt('■ 메모',{fs:11,bold:true});y+=6;
+    const lines=doc.splitTextToSize(r.notes,CW-6);
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(71,85,105);
+    lines.forEach(l=>{doc.text(l,M+3,y);y+=5;});
+  }
+
+  // 사진
+  if(withPhoto&&r.photos?.length){
+    y+=4; txt('■ 사진 ('+r.photos.length+'장)',{fs:11,bold:true}); y+=6;
+    const cols=3,pw=56,ph=42,gap=5;
+    for(let i=0;i<r.photos.length;i++){
+      const col=i%cols,row=Math.floor(i/cols);
+      const px=M+col*(pw+gap),py=y+row*(ph+gap);
+      if(py+ph>297-M){doc.addPage();y=M;}
+      try{doc.addImage(r.photos[i].url,'JPEG',px,py,pw,ph);}catch(e){}
+    }
+    y+=Math.ceil(r.photos.length/cols)*(ph+gap);
+  }
+}
+
+function hexToRgb(hex){
+  if(Array.isArray(hex))return hex;
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return[r,g,b];
+}
+
+/* ═══ 빈 점검표 ═══ */
+function initBlankDongBtns(){
+  const el=document.getElementById('blank-dong-btns');
+  const btns=['전체',...DONGS,'특정세대'];
+  el.innerHTML=btns.map(d=>`<button onclick="setBlankDong('${d}',this)" style="padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;border:2px solid ${d===_blankDong?'#2563eb':'#cbd5e1'};background:${d===_blankDong?'#2563eb':'#fff'};color:${d===_blankDong?'#fff':'#1e293b'};cursor:pointer">${d}</button>`).join('');
+
+  // 특정세대 동/호 드롭다운
+  const dongSel=document.getElementById('blank-spec-dong');
+  dongSel.innerHTML='<option value="">동 선택</option>'+DONGS.map(d=>`<option value="${d}">${d}</option>`).join('');
+  dongSel.onchange=()=>{
+    const ho=document.getElementById('blank-spec-ho');
+    ho.innerHTML='<option value="">호수 선택</option>'+(UNITS[dongSel.value]||[]).map(h=>`<option value="${h}">${h}</option>`).join('');
+  };
+}
+
+function setBlankDong(d,btn){
+  _blankDong=d;
+  document.querySelectorAll('#blank-dong-btns button').forEach(b=>{b.style.background='#fff';b.style.color='#1e293b';b.style.borderColor='#cbd5e1';});
+  if(btn){btn.style.background='#2563eb';btn.style.color='#fff';btn.style.borderColor='#2563eb';}
+  document.getElementById('blank-specific-area').style.display=d==='특정세대'?'block':'none';
+}
+
+function addBlankUnit(){
+  const dong=document.getElementById('blank-spec-dong').value;
+  const ho=document.getElementById('blank-spec-ho').value;
+  if(!dong||!ho){toast('⚠️ 동과 호수를 선택해주세요');return;}
+  const u=dong+' '+ho;
+  if(!_blankUnits.includes(u))_blankUnits.push(u);
+  renderBlankChips();
+}
+
+function renderBlankChips(){
+  document.getElementById('blank-unit-chips').innerHTML=_blankUnits.map(u=>`<span class="blank-chip">${u}<button onclick="removeBlankUnit('${u}')" style="background:none;border:none;color:#1d4ed8;cursor:pointer;font-size:13px">✕</button></span>`).join('');
+}
+
+function removeBlankUnit(u){_blankUnits=_blankUnits.filter(x=>x!==u);renderBlankChips();}
+
+async function exportBlankForm(){
+  const btn=document.getElementById('btn-blank-pdf');
+  const useQr=document.getElementById('blank-qr-chk').checked;
+  const APP_URL=window.location.href.split('?')[0];
+  let targets=[];
+  if(_blankDong==='특정세대'){
+    if(!_blankUnits.length){toast('⚠️ 세대를 먼저 추가해주세요');return;}
+    for(const u of _blankUnits){const[d,h]=u.split(' ');targets.push({dong:d,unit:u,ho:h});}
+  } else if(_blankDong==='전체'){
+    for(const u of Object.keys(UNIT_AREA)){const[d,h]=u.split(' ');targets.push({dong:d,unit:u,ho:h});}
+  } else {
+    for(const u of Object.keys(UNIT_AREA)){if(u.startsWith(_blankDong)){const[d,h]=u.split(' ');targets.push({dong:d,unit:u,ho:h});}}
+  }
+  if(!targets.length)targets=[{dong:'',unit:'',ho:''}];
+
+  let qrOk=useQr;
+  if(targets.length>20&&useQr){
+    if(!confirm(`${targets.length}개 세대 생성합니다.\nQR 포함 시 느려요.\n\n확인 = QR 제외, 취소 = 중단`)){return;}
+    qrOk=false;
+  }
+
+  btn.textContent='⏳ 생성 중...'; btn.disabled=true;
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+  const prog=document.createElement('div');
+  prog.style.cssText='color:#fff;font-size:15px;font-weight:800';
+  prog.textContent='빈 양식 생성 중...';
+  overlay.innerHTML='<div style="width:48px;height:48px;border:5px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></div>';
+  overlay.appendChild(prog);
+  document.body.appendChild(overlay);
+  await new Promise(r=>setTimeout(r,50));
+
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    let first=true;
+    for(let i=0;i<targets.length;i++){
+      if(!first)doc.addPage();
+      first=false;
+      prog.textContent=targets.length>1?`생성 중... ${i+1}/${targets.length}`:'빈 양식 생성 중...';
+      await buildBlankPage(doc,targets[i],APP_URL,qrOk);
+      if(i%3===2)await new Promise(r=>setTimeout(r,5));
+    }
+    const fn=`LH빈점검표_${_blankDong}_${now8()}.pdf`;
+    doc.save(fn); toast('📋 빈 점검표 저장 완료!');
+  }catch(e){console.error(e);toast('❌ 오류: '+e.message);}
+  finally{document.body.removeChild(overlay);btn.textContent='📋 빈 점검표 PDF 저장';btn.disabled=false;}
+}
+
+async function makeQRCanvas(text,size=120){
+  if(window._qrCache?.[text])return window._qrCache[text];
+  return new Promise(resolve=>{
+    if(typeof QRCode==='undefined'){resolve(null);return;}
+    if(!window._qrCache)window._qrCache={};
+    let done=false;
+    const div=document.createElement('div');
+    div.style.cssText=`position:fixed;left:-9999px;top:-9999px;width:${size}px;height:${size}px`;
+    document.body.appendChild(div);
+    const fail=setTimeout(()=>{if(!done){done=true;try{document.body.removeChild(div);}catch{}resolve(null);}},1500);
+    try{
+      new QRCode(div,{text,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});
+      setTimeout(()=>{
+        if(done)return;done=true;clearTimeout(fail);
+        try{
+          const canvas=div.querySelector('canvas'),img=div.querySelector('img');
+          const out=document.createElement('canvas');out.width=size;out.height=size;
+          const ctx=out.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
+          if(canvas){ctx.drawImage(canvas,0,0,size,size);try{document.body.removeChild(div);}catch{}window._qrCache[text]=out;resolve(out);}
+          else if(img?.src){const i=new Image();i.onload=()=>{ctx.drawImage(i,0,0,size,size);try{document.body.removeChild(div);}catch{}window._qrCache[text]=out;resolve(out);};i.onerror=()=>{try{document.body.removeChild(div);}catch{}resolve(null);};i.src=img.src;}
+          else{try{document.body.removeChild(div);}catch{}resolve(null);}
+        }catch(e2){try{document.body.removeChild(div);}catch{}resolve(null);}
+      },400);
+    }catch(e){clearTimeout(fail);try{document.body.removeChild(div);}catch{}resolve(null);}
+  });
+}
+
+async function buildBlankPage(doc,{dong,unit,ho},appUrl,useQr){
+  const M=14,CW=182; let y=M;
+  // 헤더
+  doc.setFillColor(37,99,235);doc.rect(M,y-2,CW,12,'F');
+  doc.setFontSize(13);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+  doc.text('LH 공가점검표',M+3,y+5);
+  doc.setFontSize(8);doc.text('양주율정마을7단지',M+CW-3,y+5,{align:'right'});
+  y+=14;
+
+  // QR코드
+  if(useQr&&unit){
+    const qrUrl=appUrl+'?dong='+encodeURIComponent(dong)+'&unit='+encodeURIComponent(ho);
+    const qrCanvas=await makeQRCanvas(qrUrl,120);
+    if(qrCanvas){const qrData=qrCanvas.toDataURL('image/png');doc.addImage(qrData,'PNG',M+CW-18,M-2,18,18);}
+  }
+
+  // 세대정보
+  doc.setFillColor(239,246,255);doc.rect(M,y,CW,22,'F');
+  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor(30,64,175);
+  doc.text(unit||'세대:                동               호',M+3,y+8);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(100,116,139);
+  const today=new Date().toLocaleDateString('ko-KR');
+  doc.text(`점검일: ${today}         점검자:`,M+3,y+15);
+  doc.text('점검차수:',M+120,y+15);
+  y+=25;
+
+  // 공가시작일 / 종합상태
+  doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
+  doc.text('공가시작일:                         종합상태:  □입주가능  □수리중  □하자있음  □입주청소전',M+3,y);
+  y+=8;
+
+  // 점검항목
+  for(const[sec,items] of Object.entries(CHKDEF)){
+    doc.setFillColor(248,250,252);doc.rect(M,y,CW,7,'F');
+    doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
+    doc.text(`${CHKSEC_ICON[sec]||''} ${sec}`,M+2,y+5);
+    y+=8;
+    for(const name of items){
+      doc.setFillColor(255,255,255);doc.rect(M,y,CW,9,'F');
+      doc.setDrawColor(226,232,240);doc.rect(M,y,CW,9);
+      doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(71,85,105);
+      doc.text(name,M+3,y+6);
+      const desc=CHKDESC[name]||'';
+      if(desc){doc.setFontSize(7);doc.setTextColor(148,163,184);doc.text(desc,M+80,y+6);}
+      doc.setFontSize(8);doc.setTextColor(30,41,59);
+      doc.text('□정상  □이상  □긴급',M+CW-46,y+6);
+      y+=10;
+    }
+    y+=2;
+  }
+
+  // 계량기
+  doc.setFillColor(248,250,252);doc.rect(M,y,CW,7,'F');
+  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
+  doc.text('📊 계량기',M+2,y+5);y+=8;
+  METERS.forEach(m=>{
+    doc.setFillColor(255,255,255);doc.rect(M,y,CW,9,'F');
+    doc.setDrawColor(226,232,240);doc.rect(M,y,CW,9);
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(71,85,105);
+    doc.text(`${m} (${MUNITS[m]})  이전:                    현재:`,M+3,y+6);
+    y+=10;
+  });
+  y+=4;
+
+  // 메모
+  doc.setFillColor(248,250,252);doc.rect(M,y,CW,7,'F');
+  doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(30,41,59);
+  doc.text('📝 메모',M+2,y+5);y+=8;
+  doc.setFillColor(255,255,255);doc.rect(M,y,CW,25,'F');
+  doc.setDrawColor(226,232,240);doc.rect(M,y,CW,25);
+  y+=27;
+}
+
+/* ═══ 엑셀 ═══ */
+function setXlsPeriod(p,btn){
+  _xlsPeriod=p;
+  document.querySelectorAll('#pane-export .abtn.xls').forEach(b=>b.classList.remove('on'));
+  btn?.classList.add('on');
+}
+
+function exportXls(){
+  const recs=getFilteredRecs(_xlsPeriod,'range-from','range-to');
+  if(!recs.length){toast('⚠️ 해당 기간 기록이 없어요');return;}
+  try{
+    const wb=XLSX.utils.book_new();
+    const byDong={};
+    for(const r of recs){const d=(r.unit||'').split(' ')[0]||'기타';if(!byDong[d])byDong[d]=[];byDong[d].push(r);}
+    for(const d of DONGS){if(!byDong[d])continue;XLSX.utils.book_append_sheet(wb,makeSheet(byDong[d]),d);}
+    XLSX.utils.book_append_sheet(wb,makeSheet(recs),'전체');
+    const fn='LH점검_'+now8()+'.xlsx';
+    XLSX.writeFile(wb,fn);
+    document.getElementById('xls-fname').textContent=fn;
+    const btn=document.getElementById('btn-xls');
+    btn.textContent='✅ 저장 완료!';btn.className='abtn done';
+    setTimeout(()=>{btn.textContent='📊 엑셀 저장';btn.className='abtn xls';},4000);
+    toast('📊 엑셀 저장 완료! '+recs.length+'건');
+  }catch(e){console.error(e);toast('❌ 엑셀 오류: '+e.message);}
+}
+
+function makeHeader(){
+  const h=['세대','점검일','점검차수','종합상태','점검자','공가시작일','공가일수'];
+  for(const sec of Object.keys(CHKDEF))for(const n of CHKDEF[sec])h.push(sec+'_'+n);
+  for(const n of METERS){h.push(n+'_이전');h.push(n+'_현재');}
+  h.push('이상항목','비고','사진수','저장일시');
+  return h;
+}
+
+function makeRow(r){
+  const row=[];
+  const d=vacDays(r.vacDate);
+  row.push(sv(r.unit),sv(r.date),sv(r.type),sv(r.status),sv(r.inspector),sv(r.vacDate),d!==null?d:'');
+  for(const sec of Object.keys(CHKDEF))for(const n of CHKDEF[sec])row.push(sv(r.checks?.[sec]?.[n]||'정상'));
+  for(const n of METERS){row.push(sv(r.meter?.[n]?.p));row.push(sv(r.meter?.[n]?.c));}
+  row.push(sv(r.issues),sv(r.notes),r.photos?.length||0,sv(r.savedAt));
+  return row;
+}
+
+function makeSheet(recs){
+  const sorted=[...recs].sort((a,b)=>sv(a.unit).localeCompare(sv(b.unit))||sv(a.date).localeCompare(sv(b.date)));
+  const data=[makeHeader(),...sorted.map(makeRow)];
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  const nCols=makeHeader().length;
+  ws['!cols']=Array.from({length:nCols},(_,i)=>({wch:i<7?[14,12,8,10,8,12,7][i]||8:8}));
+  return ws;
+}
+
+/* ═══ JSON 백업/복원 ═══ */
+function saveBackupDate(){localStorage.setItem(BACKUP_DATE_KEY,new Date().toISOString());}
+function renderLastBackupInfo(){
+  const el=document.getElementById('last-backup-info');
+  if(!el)return;
+  const saved=localStorage.getItem(BACKUP_DATE_KEY);
+  if(!saved){el.innerHTML='⚠️ 아직 백업한 적이 없어요!';el.style.background='#fff7ed';el.style.color='#c2410c';return;}
+  const diff=Math.floor((Date.now()-new Date(saved))/86400000);
+  const dateStr=new Date(saved).toLocaleDateString('ko-KR');
+  if(diff===0){el.innerHTML='✅ 마지막 백업: <b>오늘</b> ('+dateStr+')';el.style.background='#f0fdf4';el.style.color='#16a34a';}
+  else if(diff<=7){el.innerHTML='✅ 마지막 백업: <b>'+diff+'일 전</b> ('+dateStr+')';el.style.background='#f0f9ff';el.style.color='#0891b2';}
+  else{el.innerHTML='⚠️ 마지막 백업: <b>'+diff+'일 전</b> ('+dateStr+') — 백업을 권장해요!';el.style.background='#fff7ed';el.style.color='#c2410c';}
+}
+
+function checkBackupAlert(){
+  const saved=localStorage.getItem(BACKUP_DATE_KEY);
+  const diff=saved?Math.floor((Date.now()-new Date(saved))/86400000):999;
+  if(diff<7)return;
+  const msg=saved?diff+'일 동안 백업하지 않았어요!\n지금 백업 파일을 저장할까요?':'아직 한 번도 백업하지 않았어요!\n지금 백업 파일을 저장할까요?';
+  showConfirm('💾 백업 알림',msg,()=>{switchTab('export');setTimeout(exportBackup,300);});
+}
+
+function exportBackup(){
+  try{
+    const payload={records,exportedAt:new Date().toISOString(),version:10};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='LH공가점검_백업_'+now8()+'.json';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},1000);
+    saveBackupDate();renderLastBackupInfo();
+    const btn=document.getElementById('btn-backup');
+    btn.textContent='✅ 백업 저장 완료!';btn.className='abtn done';
+    setTimeout(()=>{btn.textContent='💾 백업 파일 저장';btn.className='abtn bk';},4000);
+    toast('💾 백업 완료! '+records.length+'건');
+  }catch(e){toast('❌ 백업 오류: '+e.message);}
+}
+
+function importBackup(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      const recs=data.records||[];
+      if(!recs.length){toast('⚠️ 기록이 없는 파일이에요');return;}
+      showConfirm('📥 백업 복원','기존 기록 '+records.length+'건을 덮어쓰고\n백업 파일 '+recs.length+'건을 불러올까요?',()=>{
+        records=recs;
+        sessIds=new Set();
+        saveLS();updBadge();renderDongs();renderUnits();
+        toast('✅ 복원 완료! '+recs.length+'건');
+        document.getElementById('info-cnt').textContent='📋 총 기록: '+records.length+'건';
+      });
+    }catch(err){toast('❌ 파일 오류: '+err.message);}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+/* ═══ 잠금 ═══ */
+function lockNow(){
+  localStorage.setItem(LOCK_STATE_KEY,'1');
+  document.getElementById('lock-overlay').style.display='flex';
+  document.getElementById('lock-pw-input').value='';
+  setTimeout(()=>document.getElementById('lock-pw-input').focus(),300);
+}
+
+function doUnlock(){
+  const pw=localStorage.getItem(LOCK_PW_KEY)||DEFAULT_PW;
+  const input=document.getElementById('lock-pw-input').value;
+  if(input===pw){
+    localStorage.removeItem(LOCK_STATE_KEY);
+    document.getElementById('lock-overlay').style.display='none';
+    document.getElementById('lock-pw-input').value='';
+    toast('🔓 잠금 해제 완료');
+  } else {
+    document.getElementById('lock-pw-input').style.border='2px solid #dc2626';
+    setTimeout(()=>document.getElementById('lock-pw-input').style.border='',1000);
+    toast('❌ 비밀번호가 틀렸어요');
+  }
+}
+
+function changePassword(){
+  const cur=prompt('현재 비밀번호를 입력하세요:');
+  if(cur==null)return;
+  const pw=localStorage.getItem(LOCK_PW_KEY)||DEFAULT_PW;
+  if(cur!==pw){toast('❌ 현재 비밀번호가 틀렸어요');return;}
+  const newPw=prompt('새 비밀번호를 입력하세요:');
+  if(!newPw){toast('⚠️ 비밀번호를 입력해주세요');return;}
+  const confirm2=prompt('새 비밀번호 확인:');
+  if(newPw!==confirm2){toast('❌ 비밀번호가 일치하지 않아요');return;}
+  localStorage.setItem(LOCK_PW_KEY,newPw);
+  toast('✅ 비밀번호 변경 완료!');
+}
+
+/* ═══ 초기화 ═══ */
+function init(){
+  // 잠금 확인
+  if(localStorage.getItem(LOCK_STATE_KEY)==='1'){
+    document.getElementById('lock-overlay').style.display='flex';
+    setTimeout(()=>document.getElementById('lock-pw-input').focus(),300);
+  }
+  // 데이터 로드
+  loadLS();
+  updBadge();
+  renderDongs();
+  renderUnits();
+  initBlankDongBtns();
+
+  // URL 파라미터로 세대 자동이동
+  const params=new URLSearchParams(location.search);
+  const dong=params.get('dong'),unit=params.get('unit');
+  if(dong&&unit){
+    selDong=dong;
+    setTimeout(()=>{pickUnit(unit);toast('📷 QR 이동: '+dong+' '+unit);},400);
+  } else {
+    // 임시저장 복구 or 백업 알림
+    if(!checkDraftRestore())setTimeout(checkBackupAlert,1500);
+  }
+}
+
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
