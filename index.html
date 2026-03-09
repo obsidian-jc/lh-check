@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -938,8 +939,11 @@ body.hc .prev-rec-val{color:#e2e8f0!important;}
       </div>
       <div id="tg-backup-status" style="font-size:12px;font-weight:700;margin-bottom:8px;min-height:16px"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="abtn" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="tgBackupSave()">
-          ✈️ 텔레그램으로 백업 전송
+        <button class="abtn" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)" onclick="tgBackupSave(false)">
+          ✈️ 텔레그램으로 백업 전송 (사진포함)
+        </button>
+        <button class="abtn" style="background:linear-gradient(135deg,#059669,#047857)" onclick="tgBackupSave(true)">
+          📄 텔레그램으로 백업 전송 (사진제외 · 빠름)
         </button>
         <button class="abtn" style="background:linear-gradient(135deg,#0891b2,#0e7490)" onclick="tgBackupLoad()">
           📂 텔레그램 백업 파일 불러오기
@@ -2435,12 +2439,44 @@ async function doSave(){
     vacDate:vac,photos:finalPhotos,savedAt:new Date().toISOString()};
   records.push(rec);sessIds.add(rec.id);
   if(vac)vacMap[u]=vac;
-  saveLS();savedRec=rec;fPhotos=[];
+  saveLS();savedRec=rec;
+
+  // ── 사진 ZIP 자동 다운로드 ──
+  if(finalPhotos && finalPhotos.length > 0){
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder(u.replace(' ','_') + '_' + recDate + '_' + rec.type);
+      finalPhotos.forEach((p, i) => {
+        const url = p.url || p;
+        if(typeof url === 'string' && url.startsWith('data:')){
+          const parts = url.split(',');
+          const mime = parts[0].match(/:(.*?);/)[1];
+          const ext = mime.split('/')[1] || 'jpg';
+          const byteStr = atob(parts[1]);
+          const arr = new Uint8Array(byteStr.length);
+          for(let j=0;j<byteStr.length;j++) arr[j]=byteStr.charCodeAt(j);
+          folder.file(u.replace(' ','_')+'_'+recDate+'_'+rec.type+'_사진'+(i+1)+'.'+ext, arr);
+        }
+      });
+      zip.generateAsync({type:'blob'}).then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = u.replace(' ','_')+'_'+recDate+'_'+rec.type+'_사진.zip';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast('📸 사진 ZIP 다운로드 완료!');
+      });
+    } catch(e) {
+      console.warn('ZIP 생성 실패:', e);
+    }
+  }
+
+  fPhotos=[];
   clearDraft(); stopDraftTimer();
   renderSaved();renderSessBanner();renderUnits();updBadge();
   document.getElementById('form-body').style.display='none';
   document.getElementById('no-unit').style.display='none';
-  toast('✅ 저장 완료!');
+  toast('✅ 저장 완료!' + (finalPhotos&&finalPhotos.length>0?' (사진 ZIP 다운로드 중...)':''));
 }
 
 /* ───── 저장완료 화면 ───── */
@@ -5348,7 +5384,7 @@ function loadTgSettings(){
   if(ci) ci.value = chatid;
 }
 
-async function tgBackupSave(){
+async function tgBackupSave(stripPhotos){
   const token = (localStorage.getItem('lh_tg_token')||'').trim();
   const chatid = (localStorage.getItem('lh_tg_chatid')||'').trim();
   const el = document.getElementById('tg-backup-status');
@@ -5388,8 +5424,8 @@ async function tgBackupSave(){
   const fullSize = new Blob([JSON.stringify({records: rawRecords})]).size;
   const sizeMB = (fullSize / 1024 / 1024).toFixed(1);
 
-  // 40MB 초과 시 사진 제외 버전으로 자동 전환
-  const useLight = fullSize > 40 * 1024 * 1024;
+  // 40MB 초과 또는 stripPhotos 파라미터 시 사진 제외
+  const useLight = stripPhotos || fullSize > 40 * 1024 * 1024;
   const finalRecords = useLight ? rawRecords.map(r => {
     const copy = {...r};
     if(copy.photos && copy.photos.length > 0){
