@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* 앱 최대 크기 고정 */
+body { display: flex; justify-content: center; align-items: flex-start; background: #050400 !important; }
+.screen { width: 100%; max-width: 1100px; min-width: 320px; height: 100vh; box-shadow: 0 0 60px rgba(255,224,102,.10); }
+</style>
+<title>터미널 노트</title>
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjnICflVU6VTAfcTxbCaKEb2DbZLuHddM",
+    authDomain: "yuljeong7-3e56b.firebaseapp.com",
+    projectId: "yuljeong7-3e56b",
+    storageBucket: "yuljeong7-3e56b.firebasestorage.app",
+    messagingSenderId: "245660321597",
+    appId: "1:245660321597:web:04a21998831221b9ade754"
+  };
+  const app = initializeApp(firebaseConfig);
+  const fsdb = getFirestore(app);
+  window.fbSaveNotes = async function(notes, folders){
+    try{
+      await setDoc(doc(fsdb,'notesData','main'), {
+        notes: JSON.stringify(notes),
+        folders: JSON.stringify(folders),
+        updatedAt: new Date().toISOString()
+      });
+      return true;
+    }catch(e){ console.warn('Firebase 저장 오류:',e); return false; }
+  };
+  window.fbLoadNotes = async function(){
+    try{
+      const snap = await getDoc(doc(fsdb,'notesData','main'));
+      if(snap.exists()) return { notes: JSON.parse(snap.data().notes||'[]'), folders: JSON.parse(snap.data().folders||'[]'), updatedAt: snap.data().updatedAt };
+    }catch(e){ console.warn('Firebase 불러오기 오류:',e); }
+    return null;
+  };
+  window._fbReady = true;
+  document.dispatchEvent(new Event('fbReady'));
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Noto+Sans+KR:wght@500;700;900&display=swap');
+:root{--am:#ffe066;--amd:#ffcc00;--amb:#fff5b0;--ag:rgba(255,224,102,0.18);--ag2:rgba(255,224,102,0.09);--bg:#0d0a00;--bg2:#141000;--bg3:#1a1400;--br:#4a3800;--br2:#3a2c00;--td:#bbaa44}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--am);font-family:'Noto Sans KR',sans-serif;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 72%,rgba(0,0,0,.3) 100%);pointer-events:none;z-index:9998}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes flicker{0%,100%{opacity:1}93%{opacity:.87}94%{opacity:1}97%{opacity:.93}98%{opacity:1}}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}100%{transform:translateX(0)}}
+.screen{animation:flicker 9s infinite;height:100vh;display:flex;flex-direction:column}
+.lock{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center}
+.lockbox{border:1px solid var(--amd);padding:32px 38px;text-align:center;box-shadow:0 0 40px rgba(255,224,102,.2);animation:fadein .3s ease;background:var(--bg2)}
+.locktitle{font-family:'VT323',monospace;font-size:34px;color:var(--amb);text-shadow:0 0 20px var(--am),0 0 40px var(--amd);letter-spacing:3px;margin-bottom:4px}
+.locksub{font-size:12px;color:var(--td);letter-spacing:1px;margin-bottom:22px;font-family:'Share Tech Mono',monospace}
+.lockdots{display:flex;gap:14px;justify-content:center;margin-bottom:18px}
+.lockdot{width:20px;height:20px;border-radius:50%;border:2px solid var(--br);background:transparent;transition:all .15s}
+.lockdot.on{background:var(--am);border-color:var(--am);box-shadow:0 0 12px var(--am)}
+.lockpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.lockkey{background:transparent;border:1px solid var(--br);color:var(--amb);font-family:'VT323',monospace;font-size:30px;width:68px;height:56px;cursor:pointer;transition:all .12s;text-shadow:0 0 10px rgba(255,224,102,.6)}
+.lockkey:hover{background:var(--ag);border-color:var(--am);box-shadow:0 0 10px var(--amd)}
+.lockkey:active{transform:scale(.93)}
+.lockerr{font-size:12px;color:#ff6644;letter-spacing:1px;height:18px;margin-bottom:6px;font-family:'Share Tech Mono',monospace}
+.locklink{font-size:11px;color:var(--td);margin-top:10px;cursor:pointer;letter-spacing:1px;font-family:'Share Tech Mono',monospace}
+.locklink:hover{color:var(--am)}
+.shake{animation:shake .3s ease}
+.hdr{background:var(--bg2);border-bottom:2px solid var(--br);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 2px 20px rgba(255,224,102,.08);flex-wrap:wrap}
+.htitle{font-family:'VT323',monospace;font-size:24px;color:var(--amb);text-shadow:0 0 16px var(--am),0 0 32px var(--amd);letter-spacing:2px}
+.hinfo{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.hbadge{font-size:11px;color:var(--am);border:1px solid var(--br);padding:2px 8px;font-family:'Share Tech Mono',monospace;text-shadow:0 0 6px rgba(255,224,102,.5)}
+.hbadge.dev{color:var(--td);border-color:var(--br2);cursor:pointer}
+.hbadge.dev:hover{color:var(--am);border-color:var(--br)}
+.hclock{margin-left:auto;font-size:12px;color:var(--amd);font-family:'Share Tech Mono',monospace;text-shadow:0 0 8px var(--amd)}
+.hbtns{display:flex;gap:5px;flex-wrap:wrap}
+.btn{background:transparent;border:1px solid var(--amd);color:var(--am);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;padding:5px 11px;cursor:pointer;transition:all .1s}
+.btn:hover{background:var(--ag);border-color:var(--am);color:var(--amb);box-shadow:0 0 8px var(--amd)}
+.btn:active{transform:scale(.97)}
+.btnp{background:var(--ag);border-color:var(--am);color:var(--amb)}
+.btnd{border-color:#663300;color:#ff6633}
+.btnd:hover{background:rgba(255,80,0,.1);border-color:#ff6633;box-shadow:0 0 8px #663300}
+.sbar{background:var(--bg2);border-bottom:1px solid var(--br2);padding:6px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.sprompt{color:var(--td);font-size:13px;font-family:'Share Tech Mono',monospace}
+.sinput{flex:1;min-width:100px;background:transparent;border:none;outline:none;color:var(--am);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;caret-color:var(--am)}
+.sinput::placeholder{color:#3a2c00}
+.tagchip{background:transparent;border:1px solid var(--br);color:var(--td);font-size:11px;padding:2px 7px;cursor:pointer;transition:all .1s}
+.tagchip:hover,.tagchip.on{border-color:var(--amd);color:var(--am);background:var(--ag2)}
+.main{display:flex;flex:1;overflow:hidden}
+.side{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--br);display:flex;flex-direction:column;overflow:hidden}
+.sidehd{padding:7px 12px;font-size:11px;color:var(--td);border-bottom:1px solid var(--br2);letter-spacing:1px;display:flex;align-items:center;justify-content:space-between;font-family:'Share Tech Mono',monospace}
+.nlist{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--br) transparent}
+.nitem{padding:9px 12px;border-bottom:1px solid var(--br2);cursor:pointer;transition:background .1s;animation:fadein .2s ease}
+.nitem:hover{background:var(--ag2)}
+.nitem.on{background:var(--ag);border-left:2px solid var(--am);padding-left:10px}
+.ntitle{font-size:13px;color:var(--am);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;font-weight:700}
+.nitem.on .ntitle{color:var(--amb);text-shadow:0 0 12px var(--am)}
+.nmeta{font-size:10px;color:var(--td);display:flex;gap:5px;align-items:center;font-family:'Share Tech Mono',monospace}
+.ntag{font-size:9px;color:var(--amd);border:1px solid var(--br);padding:0 4px}
+.nempty{padding:20px;text-align:center;color:var(--td);font-size:13px;line-height:2}
+.fbtn{width:100%;background:transparent;border:none;color:var(--td);font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:600;padding:7px 12px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .1s;border-bottom:1px solid var(--br2)}
+.fbtn:hover{color:var(--am);background:var(--ag2)}
+.fbtn.on{color:var(--amb);background:var(--ag)}
+.fcnt{margin-left:auto;font-size:10px;color:var(--br);font-family:'Share Tech Mono',monospace}
+.fbtn.on .fcnt{color:var(--td)}
+.eda{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.edtb{padding:6px 14px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:7px;flex-shrink:0;background:var(--bg3);flex-wrap:wrap}
+.edtitle{flex:1;min-width:120px;background:transparent;border:none;outline:none;color:var(--amb);font-family:'VT323',monospace;font-size:22px;text-shadow:0 0 14px var(--am);caret-color:var(--am);letter-spacing:1px}
+.edtitle::placeholder{color:#2a1a00}
+.tagin{background:transparent;border:1px solid var(--br);color:var(--amd);font-family:'Noto Sans KR',sans-serif;font-size:11px;padding:3px 8px;outline:none;width:90px;caret-color:var(--am)}
+.tagin:focus{border-color:var(--amd)}
+.tagin::placeholder{color:#2a1a00}
+.edfsel{background:var(--bg);border:1px solid var(--br);color:var(--amd);font-family:'Noto Sans KR',sans-serif;font-size:11px;padding:3px 6px;outline:none}
+.edfsel option{background:var(--bg2)}
+.ntags{display:flex;gap:4px;flex-wrap:wrap}
+.ntag2{font-size:11px;color:var(--amd);border:1px solid var(--br);padding:1px 6px;cursor:pointer;transition:all .1s}
+.ntag2:hover{border-color:#993300;color:#ff6633}
+.edbody{flex:1;padding:16px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--br) transparent;display:flex;flex-direction:column}
+.edta{width:100%;flex:1;min-height:120px;background:transparent;border:none;outline:none;color:var(--am);font-family:'Noto Sans KR',sans-serif;font-size:15px;line-height:1.9;resize:none;caret-color:var(--amb);text-shadow:0 0 8px rgba(255,224,102,.5);font-weight:500}
+.edta::placeholder{color:#1a1000}
+.imgarea{margin-top:8px;border-top:1px solid var(--br);padding-top:8px;display:none;flex-shrink:0}
+.imglabel{font-size:11px;color:var(--td);letter-spacing:1px;margin-bottom:8px;font-family:'Share Tech Mono',monospace}
+.imglist{display:flex;flex-wrap:wrap;gap:8px}
+.imgwrap{position:relative;border:1px solid var(--br);padding:3px;background:var(--bg)}
+.imgwrap img{width:72px;height:54px;object-fit:cover;display:block;cursor:pointer;opacity:.85;filter:sepia(.25) brightness(.92)}
+.imgwrap img:hover{opacity:1}
+.imgname{font-size:9px;color:var(--td);padding:2px 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:72px;font-family:'Share Tech Mono',monospace}
+.imgdel{position:absolute;top:2px;right:2px;background:#2a0000;border:1px solid #550000;color:#ff4400;font-size:9px;padding:1px 4px;cursor:pointer}
+.estate{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--td);font-size:14px;line-height:2.2;text-align:center;padding:20px}
+.estate pre{font-size:12px;color:#2a1a00;line-height:1.4;margin-bottom:20px;font-family:'Share Tech Mono',monospace}
+.cur::after{content:'█';animation:blink 1s infinite;color:var(--am)}
+.stbar{background:var(--bg2);border-top:1px solid var(--br);padding:4px 14px;display:flex;align-items:center;gap:14px;font-size:11px;color:var(--td);flex-shrink:0;font-family:'Share Tech Mono',monospace}
+.stdot{width:7px;height:7px;border-radius:50%;background:var(--amd);box-shadow:0 0 5px var(--amd);animation:blink 2s infinite;display:inline-block;margin-right:5px}
+.stdot.sv{background:#00cc55;box-shadow:0 0 6px #00cc55;animation:none}
+.movl{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1000;display:none;align-items:center;justify-content:center}
+.movl.op{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--amd);box-shadow:0 0 30px rgba(255,224,102,.2);padding:20px;width:420px;max-width:95vw;animation:fadein .15s ease}
+.modaltitle{font-family:'VT323',monospace;font-size:22px;color:var(--amb);text-shadow:0 0 10px var(--am);margin-bottom:14px;letter-spacing:2px}
+.modal input,.modal select{width:100%;background:var(--bg);border:1px solid var(--br);color:var(--am);font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:7px 10px;outline:none;margin-bottom:10px;caret-color:var(--am)}
+.modal input:focus{border-color:var(--amd)}
+.mbtns{display:flex;gap:7px;justify-content:flex-end;margin-top:6px}
+.otditem{border:1px solid var(--br);padding:12px;cursor:pointer;transition:background .1s;margin-bottom:8px}
+.otditem:hover{background:var(--ag2)}
+.otdyr{font-family:'VT323',monospace;font-size:20px;color:var(--amb);text-shadow:0 0 8px var(--am)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--br)}
+::-webkit-scrollbar-thumb:hover{background:var(--amd)}
+
+/* 모바일 */
+@media(max-width:600px){
+  .side{display:none;position:fixed;inset:0;z-index:500;width:100%;max-width:280px}
+  .side.open{display:flex}
+  .htitle{font-size:20px}
+  .hinfo{display:none}
+  .hbtns{gap:4px}
+  .btn{font-size:11px;padding:4px 8px}
+  .hclock{display:none}
+  .edtb{gap:5px;padding:5px 10px}
+  .edtitle{font-size:19px}
+  .edbody{padding:12px}
+  .edta{font-size:14px;line-height:1.8}
+  .stbar{gap:8px;font-size:10px;padding:3px 10px}
+  .lockkey{width:60px;height:52px;font-size:26px}
+  .lockpad{gap:8px}
+  .modal{width:95vw;padding:16px}
+  .sbar{padding:5px 10px}
+  .mbmenu{display:flex !important}
+  .mbback{display:flex !important}
+}
+@media(min-width:601px){
+  .mbmenu{display:none !important}
+  .mbback{display:none !important}
+}
+</style>
+</head>
+<body>
+
+<div class="lock" id="lockScr">
+  <div class="lockbox" id="lockBox">
+    <div class="locktitle">터미널 노트</div>
+    <div class="locksub" id="lockSub">PIN 을 입력하세요</div>
+    <div class="lockdots">
+      <div class="lockdot" id="ld0"></div><div class="lockdot" id="ld1"></div>
+      <div class="lockdot" id="ld2"></div><div class="lockdot" id="ld3"></div>
+    </div>
+    <div class="lockerr" id="lockErr">&nbsp;</div>
+    <div class="lockpad">
+      <button class="lockkey" onclick="pk('1')">1</button>
+      <button class="lockkey" onclick="pk('2')">2</button>
+      <button class="lockkey" onclick="pk('3')">3</button>
+      <button class="lockkey" onclick="pk('4')">4</button>
+      <button class="lockkey" onclick="pk('5')">5</button>
+      <button class="lockkey" onclick="pk('6')">6</button>
+      <button class="lockkey" onclick="pk('7')">7</button>
+      <button class="lockkey" onclick="pk('8')">8</button>
+      <button class="lockkey" onclick="pk('9')">9</button>
+      <button class="lockkey" onclick="pclr()" style="font-size:14px">지우기</button>
+      <button class="lockkey" onclick="pk('0')">0</button>
+      <button class="lockkey" onclick="pdel()" style="font-size:18px">⌫</button>
+    </div>
+    <div class="locklink" id="lockLink" onclick="lockLinkAct()"></div>
+  </div>
+</div>
+
+<div class="screen" id="appScr" style="display:none">
+  <div class="hdr">
+    <div>
+      <div class="htitle">▋ 터미널 노트</div>
+      <div class="hinfo">
+        <div class="hbadge" id="verBadge">v000</div>
+        <div class="hbadge dev" id="devBadge" onclick="changeDevice()" title="클릭하면 기기명 변경">📟 ?</div>
+        <div class="hbadge" id="saveBadge" style="color:var(--td);border-color:var(--br2)"></div>
+      </div>
+    </div>
+    <div class="hbtns">
+      <button class="btn" id="mbmenu" style="display:none;align-items:center" onclick="toggleSide()">☰ 목록</button>
+      <button class="btn btnp" onclick="newNote()">+ 새 노트</button>
+      <button class="btn" onclick="doExport()">내보내기</button>
+      <button class="btn" onclick="document.getElementById('impF').click()">불러오기</button>
+      <input type="file" id="impF" accept=".json" style="display:none" onchange="doImport(event)">
+      <button class="btn" onclick="fbBackupNow()" id="btnFbBackup" title="Firebase에 백업">☁️ 백업</button>
+      <button class="btn" onclick="openTgSettings()" title="텔레그램 설정">✈️ TG설정</button>
+    </div>
+    <div class="hclock" id="clock"></div>
+  </div>
+  <div class="sbar">
+    <span class="sprompt">검색</span>
+    <input class="sinput" id="srch" placeholder="키워드 입력..." oninput="renderList()" autocomplete="off">
+    <div id="tagFilter"></div>
+  </div>
+  <div class="main">
+    <div class="side" id="sidePanel">
+      <div style="border-bottom:1px solid var(--br2)">
+        <div class="sidehd">
+          <span>폴더</span>
+          <div style="display:flex;gap:5px;align-items:center">
+            <button class="btn mbback" style="display:none;font-size:10px;padding:2px 6px;border-color:#663300;color:#ff6633" onclick="toggleSide()">✕ 닫기</button>
+            <button class="btn" style="font-size:10px;padding:2px 6px" onclick="openFMod()">+ 폴더</button>
+          </div>
+        </div>
+        <div id="flist"></div>
+      </div>
+      <div class="sidehd">
+        <span>노트 목록</span>
+        <span id="ncnt" style="color:var(--br)">0개</span>
+      </div>
+      <div class="nlist" id="nlist"></div>
+    </div>
+    <div class="eda">
+      <div class="estate" id="estate">
+        <pre>
+  ╔══════════════════════════════╗
+  ║      터미널 노트  v2.0      ║
+  ║  ──────────────────────────  ║
+  ║   로컬 저장 노트 시스템     ║
+  ╚══════════════════════════════╝</pre>
+        <div>[ + 새 노트 ] 버튼으로 노트를 작성하세요</div>
+        <div style="font-size:12px;margin-top:6px;color:var(--td)">내보내기 → JSON 파일로 SSD 저장</div>
+        <div style="font-size:13px;color:var(--br);margin-top:16px">준비완료 <span class="cur"></span></div>
+      </div>
+      <div id="edWrap" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+        <div class="edtb">
+          <input class="edtitle" id="eTitle" placeholder="제목..." oninput="onEdit()">
+          <div class="ntags" id="eTags"></div>
+          <input class="tagin" id="tagIn" placeholder="#태그" onkeydown="onTagKey(event)">
+          <select class="edfsel" id="eFolder" onchange="onEdit()"></select>
+          <button class="btn" onclick="document.getElementById('imgIn').click()" style="font-size:11px">📷 사진</button>
+          <input type="file" id="imgIn" accept="image/*" multiple style="display:none" onchange="addImgs(event)">
+          <button class="btn" onclick="doStamp()" style="font-size:11px">🕐 도장</button>
+          <button class="btn btnd" onclick="delNote()" style="font-size:11px">삭제</button>
+          <button class="btn btnp" onclick="saveNote()" style="font-size:11px">저장</button>
+          <button class="btn" onclick="sendNoteToTg()" style="font-size:11px;border-color:#2196f3;color:#60c0ff" title="텔레그램으로 전송">✈️</button>
+        </div>
+        <div class="edbody">
+          <textarea class="edta" id="eContent" placeholder="내용을 입력하세요..." oninput="onEdit()"></textarea>
+          <div class="imgarea" id="imgArea">
+            <div class="imglabel">// 첨부 사진</div>
+            <div class="imglist" id="imgList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="stbar">
+    <span><span class="stdot" id="stDot"></span><span id="stTxt">준비</span></span>
+    <span>전체: <span id="sbTotal">0</span>개</span>
+    <span>글자: <span id="sbChars">0</span></span>
+    <span id="sbFolder" style="margin-left:auto"></span>
+    <span id="sbTime"></span>
+  </div>
+</div>
+
+<div class="movl" id="fMod">
+  <div class="modal">
+    <div class="modaltitle">▋ 새 폴더</div>
+    <input id="fInp" placeholder="폴더 이름..." onkeydown="if(event.key==='Enter')addFolder()">
+    <div class="mbtns">
+      <button class="btn" onclick="closeFMod()">취소</button>
+      <button class="btn btnp" onclick="addFolder()">만들기</button>
+    </div>
+  </div>
+</div>
+
+<div class="movl" id="otdMod">
+  <div class="modal" style="width:460px">
+    <div class="modaltitle">▋ 과거의 오늘</div>
+    <div id="otdSub" style="font-size:12px;color:var(--td);margin-bottom:14px"></div>
+    <div id="otdList" style="max-height:52vh;overflow-y:auto"></div>
+    <div class="mbtns" style="margin-top:12px">
+      <button class="btn btnp" onclick="closeOtd()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 텔레그램 설정 모달 -->
+<div class="movl" id="tgMod">
+  <div class="modal" style="width:460px">
+    <div class="modaltitle">▋ 텔레그램 설정</div>
+    <div style="font-size:11px;color:var(--td);margin-bottom:14px;line-height:1.7">
+      노트 저장 시 텔레그램으로 날짜+내용 요약을 전송해요.<br>
+      Bot Token과 Chat ID를 입력하세요.
+    </div>
+    <div style="font-size:11px;color:var(--td);margin-bottom:6px">Bot Token</div>
+    <input id="tgToken" placeholder="1234567890:ABCdef..." style="font-family:monospace;font-size:11px">
+    <div style="font-size:11px;color:var(--td);margin-bottom:6px">Chat ID</div>
+    <input id="tgChatId" placeholder="-1001234567890">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <label style="font-size:12px;color:var(--td);display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="tgAutoSend" style="width:14px;height:14px">
+        노트 저장할 때마다 자동 전송
+      </label>
+    </div>
+    <div class="mbtns" style="justify-content:space-between">
+      <button class="btn" onclick="testTgMsg()">테스트 전송</button>
+      <div style="display:flex;gap:7px">
+        <button class="btn" onclick="closeTgSettings()">취소</button>
+        <button class="btn btnp" onclick="saveTgSettings()">저장</button>
+      </div>
+    </div>
+    <div id="tgTestResult" style="font-size:11px;margin-top:8px;text-align:center;height:16px"></div>
+  </div>
+</div>
+
+<script>
+var K={DB:'tnotes_db',FL:'tnotes_folders',PIN:'tnotes_pin',VER:'tnotes_ver',DEV:'tnotes_device',SAVE:'tnotes_lastsave',TG_TOKEN:'tnotes_tg_token',TG_CHAT:'tnotes_tg_chat',TG_AUTO:'tnotes_tg_auto'};
+
+
+// ── 모바일 사이드바 토글
+function toggleSide(){
+  var s=document.getElementById('sidePanel');
+  if(s)s.classList.toggle('open');
+}
+
+// ══════════════════════
+// ☁️ OneDrive 연동
+// ══════════════════════
+
+function getOdToken(){try{return JSON.parse(localStorage.getItem(K.OD_TOKEN))||null;}catch(e){return null;}}
+function setOdToken(t){localStorage.setItem(K.OD_TOKEN,JSON.stringify(t));}
+function getOdAccount(){return localStorage.getItem(K.OD_ACCOUNT)||'';}
+
+
+
+
+var notes=[],folders=[],curId=null,curFolder='ALL',curTag=null,dirty=false,saveTimer=null;
+
+function loadData(){
+  try{notes=JSON.parse(localStorage.getItem(K.DB))||[];}catch(e){notes=[];}
+  try{folders=JSON.parse(localStorage.getItem(K.FL))||['일반','업무','개인'];}catch(e){folders=['일반','업무','개인'];}
+}
+function saveData(){
+  var ver=getVer()+1;
+  localStorage.setItem(K.VER,String(ver));
+  localStorage.setItem(K.DB,JSON.stringify(notes));
+  localStorage.setItem(K.FL,JSON.stringify(folders));
+  localStorage.setItem(K.SAVE,new Date().toISOString());
+  updateBadges();
+  setSt('저장됨  '+padVer(ver),true);
+  dirty=false;
+  // Firebase 자동 백업 (5분에 1번)
+  var now=Date.now();
+  var last=parseInt(localStorage.getItem('tnotes_fb_last')||'0');
+  if(now-last>300000){
+    localStorage.setItem('tnotes_fb_last',String(now));
+    fbBackupSilent();
+  }
+  // 텔레그램 자동 전송 (자동전송 설정 시)
+  if(localStorage.getItem(K.TG_AUTO)==='1') sendNoteToTgAuto();
+}
+function getVer(){return parseInt(localStorage.getItem(K.VER)||'0');}
+function padVer(v){return 'v'+String(v).padStart(3,'0');}
+function getDevice(){return localStorage.getItem(K.DEV)||'';}
+function setDevice(d){localStorage.setItem(K.DEV,d);}
+
+function updateBadges(){
+  var vb=document.getElementById('verBadge');
+  var db=document.getElementById('devBadge');
+  var sb=document.getElementById('saveBadge');
+  if(vb)vb.textContent=padVer(getVer());
+  if(db)db.textContent='📟 '+(getDevice()||'기기명 없음');
+  var ls=localStorage.getItem(K.SAVE);
+  if(sb&&ls){
+    var d=new Date(ls);
+    function p(v){return String(v).padStart(2,'0');}
+    sb.textContent='💾 '+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+  }
+}
+function changeDevice(){
+  var cur=getDevice();
+  var name=prompt('기기 이름을 입력하세요\n(예: 맥북, PC, 노트북)',cur||'');
+  if(name===null)return;
+  name=name.trim();
+  if(!name)return;
+  setDevice(name);
+  updateBadges();
+  setSt('기기명 변경: '+name,true);
+}
+function setSt(msg,saved){
+  document.getElementById('stTxt').textContent=msg;
+  document.getElementById('stDot').className=saved?'stdot sv':'stdot';
+}
+function updateClock(){
+  var n=new Date();
+  function p(v){return String(v).padStart(2,'0');}
+  var ds=n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate());
+  var ts=p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());
+  var el=document.getElementById('clock');if(el)el.textContent=ds+'  '+ts;
+  var sb=document.getElementById('sbTime');if(sb)sb.textContent=ts;
+}
+setInterval(updateClock,1000);updateClock();
+
+function makeDateStr(){
+  var n=new Date();
+  var days=['일','월','화','수','목','금','토'];
+  function p(v){return String(v).padStart(2,'0');}
+  return n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate())+' ('+days[n.getDay()]+') '+p(n.getHours())+':'+p(n.getMinutes());
+}
+
+function fetchWeather(cb){
+  var url='https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current=temperature_2m,weathercode&timezone=Asia%2FSeoul';
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET',url,true);xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        var t=Math.round(d.current.temperature_2m);
+        var c=d.current.weathercode;
+        var desc=c===0?'☀️ 맑음':c<=2?'⛅ 구름조금':c<=3?'☁️ 흐림':c<=49?'🌫 안개':c<=59?'🌦 이슬비':c<=69?'🌧 비':c<=79?'❄️ 눈':c<=84?'🌧 소나기':'⛈ 뇌우';
+        cb(desc+'  '+t+'°C  서울');
+      }catch(e){cb('날씨 파싱 오류');}
+    }else{cb('날씨 로드 실패');}
+  };
+  xhr.onerror=function(){cb('오프라인');};
+  xhr.ontimeout=function(){cb('날씨 타임아웃');};
+  xhr.send();
+}
+
+function renderFolders(){
+  var el=document.getElementById('flist');
+  var sel=document.getElementById('eFolder');
+  var html='<button class="fbtn'+(curFolder==='ALL'?' on':'')+'" onclick="selFolder(\'ALL\')">▸ 전체<span class="fcnt">'+notes.length+'</span></button>';
+  for(var i=0;i<folders.length;i++){
+    var f=folders[i];var cnt=0;
+    for(var j=0;j<notes.length;j++){if(notes[j].folder===f)cnt++;}
+    html+='<button class="fbtn'+(curFolder===f?' on':'')+'" onclick="selFolder(\''+f+'\')">▸ '+f+'<span class="fcnt">'+cnt+'</span></button>';
+  }
+  el.innerHTML=html;
+  if(!sel)return;
+  var curNote=null;for(var k=0;k<notes.length;k++){if(notes[k].id===curId){curNote=notes[k];break;}}
+  var opts='';
+  for(var m=0;m<folders.length;m++){
+    var sel2=curNote&&curNote.folder===folders[m]?' selected':'';
+    opts+='<option value="'+folders[m]+'"'+sel2+'>'+folders[m]+'</option>';
+  }
+  sel.innerHTML=opts;
+}
+function selFolder(f){curFolder=f;curTag=null;renderFolders();renderList();renderTagFilter();}
+
+function getAllTags(){var map={};for(var i=0;i<notes.length;i++){var t=notes[i].tags||[];for(var j=0;j<t.length;j++)map[t[j]]=1;}return Object.keys(map);}
+function renderTagFilter(){
+  var tags=getAllTags();var el=document.getElementById('tagFilter');if(!el)return;
+  if(!tags.length){el.innerHTML='';return;}
+  var html='';
+  for(var i=0;i<tags.length;i++){html+='<span class="tagchip'+(curTag===tags[i]?' on':'')+'" onclick="selTag(\''+tags[i]+'\')">#'+tags[i]+'</span>';}
+  el.innerHTML=html;
+}
+function selTag(t){curTag=curTag===t?null:t;renderTagFilter();renderList();}
+
+function renderList(){
+  var q=document.getElementById('srch').value.trim().toLowerCase();
+  var filtered=[];
+  for(var i=0;i<notes.length;i++){
+    var n=notes[i];
+    if(curFolder!=='ALL'&&n.folder!==curFolder)continue;
+    if(curTag&&(n.tags||[]).indexOf(curTag)<0)continue;
+    if(q){var hay=((n.title||'')+' '+(n.content||'')+' '+(n.tags||[]).join(' ')).toLowerCase();if(hay.indexOf(q)<0)continue;}
+    filtered.push(n);
+  }
+  filtered.sort(function(a,b){return b.updatedAt-a.updatedAt;});
+  document.getElementById('ncnt').textContent=filtered.length+'개';
+  document.getElementById('sbTotal').textContent=notes.length;
+  var el=document.getElementById('nlist');
+  if(!filtered.length){el.innerHTML='<div class="nempty">노트가 없어요<br>[ + 새 노트 ] 로 작성하세요</div>';return;}
+  var html='';
+  for(var j=0;j<filtered.length;j++){
+    var n=filtered[j];
+    var d=new Date(n.updatedAt);
+    var ds=(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    var prev=(n.content||'').replace(/\n/g,' ').slice(0,36)||'내용 없음';
+    var tagH='';var tags=(n.tags||[]).slice(0,2);
+    for(var k=0;k<tags.length;k++)tagH+='<span class="ntag">#'+tags[k]+'</span>';
+    html+='<div class="nitem'+(n.id===curId?' on':'')+'" onclick="openNote(\''+n.id+'\')"><div class="ntitle">'+(n.title||'제목 없음')+'</div><div style="font-size:11px;color:var(--td);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+prev+'</div><div class="nmeta">'+tagH+'<span style="margin-left:auto">'+ds+'</span></div></div>';
+  }
+  el.innerHTML=html;
+}
+
+function openNote(id){
+  if(dirty)saveNote();
+  curId=id;
+  var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===id){n=notes[i];break;}}
+  if(!n)return;
+  document.getElementById('estate').style.display='none';
+  document.getElementById('edWrap').style.display='flex';
+  document.getElementById('eTitle').value=n.title||'';
+  document.getElementById('eContent').value=n.content||'';
+  document.getElementById('sbChars').textContent=(n.content||'').length;
+  document.getElementById('sbFolder').textContent='폴더: '+(n.folder||'?');
+  var sel=document.getElementById('eFolder');if(sel)sel.value=n.folder||folders[0];
+  renderTags(n.tags||[]);renderImgs(n.images||[]);renderList();
+  setSt('열림 — '+(n.title||'제목 없음'));
+}
+
+function renderTags(tags){
+  var el=document.getElementById('eTags');if(!el)return;
+  var html='';for(var i=0;i<tags.length;i++)html+='<span class="ntag2" onclick="rmTag(\''+tags[i]+'\')">#'+tags[i]+'</span>';
+  el.innerHTML=html;
+}
+function onTagKey(e){
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    var val=e.target.value.replace(/[#,]/g,'').trim();
+    if(!val||!curId)return;
+    var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===curId){n=notes[i];break;}}
+    if(!n)return;if(!n.tags)n.tags=[];
+    if(n.tags.indexOf(val)<0){n.tags.push(val);renderTags(n.tags);onEdit();}
+    e.target.value='';
+  }
+}
+function rmTag(tag){
+  var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===curId){n=notes[i];break;}}
+  if(!n)return;
+  n.tags=(n.tags||[]).filter(function(t){return t!==tag;});
+  renderTags(n.tags);onEdit();
+}
+
+function newNote(){
+  if(dirty)saveNote();
+  var id='n'+Date.now();
+  var folder=curFolder==='ALL'?folders[0]:curFolder;
+  var dateStr=makeDateStr();
+  var content=dateStr+'\n'+'────────────────────────'+'\n\n';
+  var n={id:id,title:'',content:content,tags:[],images:[],folder:folder,createdAt:Date.now(),updatedAt:Date.now()};
+  notes.unshift(n);saveData();renderFolders();renderList();renderTagFilter();openNote(id);
+  setSt('날씨 불러오는 중...');
+  fetchWeather(function(weather){
+    var cur=null;for(var i=0;i<notes.length;i++){if(notes[i].id===id){cur=notes[i];break;}}
+    if(!cur)return;
+    var lines=cur.content.split('\n');lines.splice(1,0,weather);cur.content=lines.join('\n');
+    var ta=document.getElementById('eContent');
+    if(ta){ta.value=cur.content;document.getElementById('sbChars').textContent=cur.content.length;ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}
+    saveData();setSt('새 노트 준비 완료',true);
+  });
+  var ta=document.getElementById('eContent');if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}
+}
+
+function doStamp(){
+  var ta=document.getElementById('eContent');if(!ta||!curId)return;
+  var dateStr=makeDateStr();
+  var start=ta.selectionStart;
+  var before=ta.value.slice(0,start);var after=ta.value.slice(ta.selectionEnd);
+  var ins=(before.length>0&&before[before.length-1]!=='\n'?'\n':'')+dateStr+'\n';
+  ta.value=before+ins+after;
+  var pos=before.length+ins.length;ta.focus();ta.setSelectionRange(pos,pos);onEdit();
+  setSt('날씨 불러오는 중...');
+  fetchWeather(function(weather){
+    var lines=ta.value.split('\n');
+    var li=ta.value.slice(0,pos).split('\n').length;
+    lines.splice(li,0,weather);ta.value=lines.join('\n');
+    ta.focus();ta.setSelectionRange(pos+weather.length+1,pos+weather.length+1);
+    onEdit();setSt('도장 완료',true);
+  });
+}
+
+function onEdit(){
+  dirty=true;setSt('편집 중...');
+  document.getElementById('sbChars').textContent=document.getElementById('eContent').value.length;
+  clearTimeout(saveTimer);saveTimer=setTimeout(saveNote,1800);
+}
+function saveNote(){
+  if(!curId)return;
+  var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===curId){n=notes[i];break;}}
+  if(!n)return;
+  n.title=document.getElementById('eTitle').value||'제목 없음';
+  n.content=document.getElementById('eContent').value;
+  var sel=document.getElementById('eFolder');n.folder=sel?sel.value:folders[0];
+  n.updatedAt=Date.now();
+  document.getElementById('sbFolder').textContent='폴더: '+n.folder;
+  saveData();renderFolders();renderList();renderTagFilter();
+}
+function delNote(){
+  if(!curId)return;if(!confirm('이 노트를 삭제할까요?'))return;
+  var nn=[];for(var i=0;i<notes.length;i++){if(notes[i].id!==curId)nn.push(notes[i]);}
+  notes=nn;curId=null;dirty=false;saveData();renderFolders();renderList();renderTagFilter();
+  document.getElementById('estate').style.display='flex';document.getElementById('edWrap').style.display='none';setSt('삭제 완료');
+}
+
+function addImgs(e){
+  var files=Array.from(e.target.files);if(!files.length||!curId)return;
+  var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===curId){n=notes[i];break;}}
+  if(!n)return;if(!n.images)n.images=[];
+  var done=0;setSt('사진 불러오는 중...');
+  for(var j=0;j<files.length;j++){
+    (function(file){
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        n.images.push({id:'i'+Date.now()+'_'+Math.random().toString(36).slice(2),name:file.name,data:ev.target.result,addedAt:Date.now()});
+        done++;if(done===files.length){saveData();renderImgs(n.images);setSt('사진 '+files.length+'장 첨부됨',true);}
+      };reader.readAsDataURL(file);
+    })(files[j]);
+  }
+  e.target.value='';
+}
+function renderImgs(images){
+  var area=document.getElementById('imgArea');var list=document.getElementById('imgList');
+  if(!images||!images.length){if(area)area.style.display='none';return;}
+  if(area)area.style.display='block';
+  var html='';
+  for(var i=0;i<images.length;i++){
+    var img=images[i];
+    html+='<div class="imgwrap"><img src="'+img.data+'" onclick="viewImg(\''+img.id+'\')" title="'+img.name+'"><div class="imgname">'+img.name+'</div><button class="imgdel" onclick="rmImg(\''+img.id+'\')">✕</button></div>';
+  }
+  if(list)list.innerHTML=html;
+}
+function viewImg(imgId){
+  var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===curId){n=notes[i];break;}}
+  if(!n)return;
+  var img=null;var imgs=n.images||[];for(var j=0;j<imgs.length;j++){if(imgs[j].id===imgId){img=imgs[j];break;}}
+  if(!img)return;
+  var w=window.open('','_blank','width=800,height=600');
+  if(w)w.document.write('<html><body style="margin:0;background:#0a0800;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="'+img.data+'" style="max-width:100%;max-height:100vh"></body></html>');
+}
+function rmImg(imgId){
+  if(!confirm('이 사진을 삭제할까요?'))return;
+  var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===curId){n=notes[i];break;}}
+  if(!n)return;
+  n.images=(n.images||[]).filter(function(i){return i.id!==imgId;});
+  saveData();renderImgs(n.images);setSt('사진 삭제됨');
+}
+
+function doExport(){
+  var ver=getVer();var dev=getDevice()||'unknown';var devSafe=dev.replace(/\s/g,'_');
+  var payload={version:2,appVer:ver,device:dev,exportedAt:new Date().toISOString(),notes:notes,folders:folders};
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');
+  var d=new Date();function p(v){return String(v).padStart(2,'0');}
+  var fname='터미널노트_'+padVer(ver)+'_'+devSafe+'_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'.json';
+  a.href=url;a.download=fname;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  setSt('내보내기 완료 — '+fname,true);
+}
+function doImport(e){
+  var file=e.target.files[0];if(!file)return;
+  var r=new FileReader();
+  r.onload=function(ev){
+    try{
+      var data=JSON.parse(ev.target.result);
+      if(!data.notes){setSt('불러오기 오류 — 올바른 파일이 아니에요');return;}
+      var inVer=data.appVer||0;var inDev=data.device||'알 수 없음';
+      var curVer=getVer();var curDev=getDevice()||'현재 기기';
+      var msg='불러올 파일: '+padVer(inVer)+' ('+inDev+')\n현재: '+padVer(curVer)+' ('+curDev+')\n\n';
+      if(inVer>curVer)msg+='불러올 파일이 더 최신이에요.\n병합할까요?';
+      else if(inVer<curVer)msg+='현재 파일이 더 최신이에요.\n그래도 병합할까요?';
+      else msg+='같은 버전이에요. 병합할까요?';
+      if(!confirm(msg)){e.target.value='';return;}
+      var added=0,updated=0;
+      for(var i=0;i<data.notes.length;i++){
+        var inc=data.notes[i];var ex=null;
+        for(var j=0;j<notes.length;j++){if(notes[j].id===inc.id){ex=notes[j];break;}}
+        if(!ex){notes.push(inc);added++;}
+        else if((inc.updatedAt||0)>(ex.updatedAt||0)){for(var k=0;k<notes.length;k++){if(notes[k].id===inc.id){notes[k]=inc;break;}}updated++;}
+      }
+      if(data.folders){for(var m=0;m<data.folders.length;m++){if(folders.indexOf(data.folders[m])<0)folders.push(data.folders[m]);}}
+      saveData();renderFolders();renderList();renderTagFilter();
+      setSt('병합 완료 — 추가 '+added+'개 / 업데이트 '+updated+'개',true);
+      alert('병합 완료!\n새로 추가: '+added+'개\n최신으로 업데이트: '+updated+'개');
+    }catch(err){setSt('불러오기 오류: '+err.message);}
+  };
+  r.readAsText(file);e.target.value='';
+}
+
+function openFMod(){document.getElementById('fMod').classList.add('op');document.getElementById('fInp').focus();}
+function closeFMod(){document.getElementById('fMod').classList.remove('op');document.getElementById('fInp').value='';}
+function addFolder(){
+  var name=document.getElementById('fInp').value.trim();if(!name)return;
+  if(folders.indexOf(name)<0){folders.push(name);saveData();}
+  renderFolders();renderList();closeFMod();
+}
+
+function checkOtd(){
+  var now=new Date();
+  var mm=String(now.getMonth()+1).padStart(2,'0');var dd=String(now.getDate()).padStart(2,'0');
+  var todayMD=mm+'-'+dd;var matches=[];
+  for(var i=0;i<notes.length;i++){
+    var n=notes[i];var d=new Date(n.createdAt);
+    var nMM=String(d.getMonth()+1).padStart(2,'0');var nDD=String(d.getDate()).padStart(2,'0');
+    if(nMM+'-'+nDD===todayMD){var diff=now.getFullYear()-d.getFullYear();if(diff>=1)matches.push({note:n,diff:diff,year:d.getFullYear(),d:d});}
+  }
+  if(!matches.length)return;
+  matches.sort(function(a,b){return b.diff-a.diff;});
+  var sub=document.getElementById('otdSub');
+  if(sub)sub.textContent=parseInt(mm)+'월 '+parseInt(dd)+'일 — 과거에 기록된 노트가 있어요';
+  var html='';
+  for(var j=0;j<matches.length;j++){
+    var m=matches[j];var nd=m.d;
+    function p2(v){return String(v).padStart(2,'0');}
+    var dStr=m.year+'-'+p2(nd.getMonth()+1)+'-'+p2(nd.getDate())+' '+p2(nd.getHours())+':'+p2(nd.getMinutes());
+    var ylabel=m.diff===1?'1년 전 오늘':m.diff+'년 전 오늘';
+    var prev=(m.note.content||'').slice(0,100).replace(/\n/g,' ')||'내용 없음';
+    var imgB=(m.note.images||[]).length>0?'<span style="font-size:10px;color:var(--amd);border:1px solid var(--br);padding:1px 5px;margin-left:6px">📷 '+m.note.images.length+'</span>':'';
+    html+='<div class="otditem" onclick="closeOtd();openNote(\''+m.note.id+'\')"><div><span class="otdyr">'+ylabel+'</span><span style="font-size:10px;color:var(--td);margin-left:8px">'+dStr+'</span>'+imgB+'</div><div style="font-size:13px;color:var(--am);margin:5px 0 3px;font-weight:700">'+(m.note.title||'제목 없음')+'</div><div style="font-size:12px;color:var(--td);line-height:1.6">'+prev+'</div></div>';
+  }
+  var el=document.getElementById('otdList');if(el)el.innerHTML=html;
+  setTimeout(function(){document.getElementById('otdMod').classList.add('op');},1500);
+}
+function closeOtd(){document.getElementById('otdMod').classList.remove('op');}
+
+// ════════════════════════════════
+// ☁️ Firebase 백업
+// ════════════════════════════════
+function fbBackupNow(){
+  function tryFb(n){
+    if(window.fbSaveNotes){
+      window.fbSaveNotes(notes,folders).then(function(ok){
+        if(ok) setSt('☁️ Firebase 백업 완료',true);
+        else setSt('Firebase 저장 실패');
+      });
+    } else if(n<20){ setTimeout(function(){tryFb(n+1);},200); }
+    else { setSt('Firebase 연결 안됨'); }
+  }
+  setSt('☁️ Firebase 백업 중...');
+  tryFb(0);
+}
+function fbBackupSilent(){
+  function tryFb(n){
+    if(window.fbSaveNotes){ window.fbSaveNotes(notes,folders); }
+    else if(n<20){ setTimeout(function(){tryFb(n+1);},200); }
+  }
+  tryFb(0);
+}
+function fbLoadOnStart(){
+  function tryFb(n){
+    if(window.fbLoadNotes){
+      window.fbLoadNotes().then(function(fbData){
+        if(!fbData||!fbData.notes||!fbData.notes.length) return;
+        // 로컬보다 Firebase가 더 최신이면 병합
+        var changed=0;
+        fbData.notes.forEach(function(fn){
+          var local=null;
+          for(var i=0;i<notes.length;i++){if(notes[i].id===fn.id){local=notes[i];break;}}
+          if(!local){notes.push(fn);changed++;}
+          else if((fn.updatedAt||0)>(local.updatedAt||0)){
+            for(var i=0;i<notes.length;i++){if(notes[i].id===fn.id){notes[i]=fn;break;}}
+            changed++;
+          }
+        });
+        if(fbData.folders){
+          fbData.folders.forEach(function(f){if(folders.indexOf(f)<0){folders.push(f);changed++;}});
+        }
+        if(changed>0){
+          localStorage.setItem(K.DB,JSON.stringify(notes));
+          localStorage.setItem(K.FL,JSON.stringify(folders));
+          renderFolders();renderList();renderTagFilter();
+          setSt('☁️ Firebase 동기화 완료 ('+changed+'건)',true);
+        }
+      }).catch(function(){});
+    } else if(n<20){ setTimeout(function(){tryFb(n+1);},200); }
+  }
+  tryFb(0);
+}
+
+// ════════════════════════════════
+// ✈️ 텔레그램 연동
+// ════════════════════════════════
+function getTgToken(){ return localStorage.getItem(K.TG_TOKEN)||''; }
+function getTgChat(){ return localStorage.getItem(K.TG_CHAT)||''; }
+
+function openTgSettings(){
+  document.getElementById('tgToken').value=getTgToken();
+  document.getElementById('tgChatId').value=getTgChat();
+  document.getElementById('tgAutoSend').checked=localStorage.getItem(K.TG_AUTO)==='1';
+  document.getElementById('tgTestResult').textContent='';
+  document.getElementById('tgMod').classList.add('op');
+}
+function closeTgSettings(){ document.getElementById('tgMod').classList.remove('op'); }
+function saveTgSettings(){
+  localStorage.setItem(K.TG_TOKEN, document.getElementById('tgToken').value.trim());
+  localStorage.setItem(K.TG_CHAT, document.getElementById('tgChatId').value.trim());
+  localStorage.setItem(K.TG_AUTO, document.getElementById('tgAutoSend').checked?'1':'0');
+  closeTgSettings();
+  setSt('텔레그램 설정 저장됨',true);
+}
+function testTgMsg(){
+  var token=document.getElementById('tgToken').value.trim();
+  var chat=document.getElementById('tgChatId').value.trim();
+  var el=document.getElementById('tgTestResult');
+  if(!token||!chat){el.textContent='Token과 Chat ID를 입력해주세요';el.style.color='#ff6644';return;}
+  el.textContent='전송 중...';el.style.color='var(--td)';
+  fetch('https://api.telegram.org/bot'+token+'/sendMessage',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:chat,text:'✅ 터미널 노트 연결 성공!\n테스트 메시지입니다.',parse_mode:'HTML'})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.ok){el.textContent='✅ 전송 성공!';el.style.color='#00cc55';}
+    else{el.textContent='❌ 오류: '+d.description;el.style.color='#ff6644';}
+  }).catch(function(){el.textContent='❌ 네트워크 오류';el.style.color='#ff6644';});
+}
+function sendNoteToTg(){
+  if(!curId){setSt('노트를 먼저 선택해주세요');return;}
+  var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===curId){n=notes[i];break;}}
+  if(!n)return;
+  var token=getTgToken(); var chat=getTgChat();
+  if(!token||!chat){openTgSettings();return;}
+  var d=new Date();
+  function p(v){return String(v).padStart(2,'0');}
+  var dateStr=d.getFullYear()+'.'+p(d.getMonth()+1)+'.'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+  var preview=(n.content||'').slice(0,200).replace(/</g,'&lt;');
+  var tags=(n.tags||[]).map(function(t){return '#'+t;}).join(' ');
+  var imgCnt=(n.images||[]).length;
+  var msg='📝 <b>터미널 노트</b>\n'
+    +'📅 '+dateStr+'\n'
+    +'📁 폴더: '+(n.folder||'')+'\n'
+    +(tags?'🏷 '+tags+'\n':'')
+    +'━━━━━━━━━━━━━━━\n'
+    +'<b>'+(n.title||'제목 없음')+'</b>\n'
+    +(preview?preview+'\n':'')
+    +(imgCnt>0?'\n📷 사진 '+imgCnt+'장 — 이 메시지에 사진을 첨부해주세요':'');
+  setSt('텔레그램 전송 중...');
+  fetch('https://api.telegram.org/bot'+token+'/sendMessage',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:chat,text:msg,parse_mode:'HTML'})
+  }).then(function(r){return r.json();}).then(function(res){
+    if(!res.ok){setSt('텔레그램 오류: '+res.description);return;}
+    // 메시지 링크 생성 (그룹 ID에서 -100 제거)
+    var msgId=res.result.message_id;
+    var chatId=String(res.result.chat.id);
+    var link='';
+    if(chatId.startsWith('-100')){
+      // 슈퍼그룹/채널 → 공개 링크 생성 가능
+      var pureId=chatId.replace('-100','');
+      link='https://t.me/c/'+pureId+'/'+msgId;
+    } else {
+      // 그룹 타입 — message_id만 저장
+      link='tg://msg?msgid='+msgId;
+    }
+    // 메모 내용 맨 아래에 링크 자동 추가
+    var ta=document.getElementById('eContent');
+    var linkLine='\n\n🔗 텔레그램: '+link+' ('+dateStr+')';
+    // 이미 링크가 있으면 교체, 없으면 추가
+    var cur=ta?ta.value:n.content||'';
+    var linkRegex=/\n\n🔗 텔레그램: .+/;
+    if(linkRegex.test(cur)){
+      cur=cur.replace(linkRegex,linkLine);
+    } else {
+      cur=cur+linkLine;
+    }
+    if(ta) ta.value=cur;
+    n.content=cur;
+    n.updatedAt=Date.now();
+    saveData();
+    renderList();
+    setSt('✈️ 전송 완료! 링크 저장됨',true);
+  }).catch(function(){setSt('텔레그램 네트워크 오류');});
+}
+function sendNoteToTgAuto(){
+  if(!curId) return;
+  var n=null;for(var i=0;i<notes.length;i++){if(notes[i].id===curId){n=notes[i];break;}}
+  if(!n) return;
+  var token=getTgToken(); var chat=getTgChat();
+  if(!token||!chat) return;
+  var d=new Date();
+  function p(v){return String(v).padStart(2,'0');}
+  var dateStr=d.getFullYear()+'.'+p(d.getMonth()+1)+'.'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+  var preview=(n.content||'').slice(0,150).replace(/</g,'&lt;');
+  var msg='📝 <b>'+(n.title||'제목 없음')+'</b>  [자동저장]\n📅 '+dateStr+'\n'+(preview||'');
+  fetch('https://api.telegram.org/bot'+token+'/sendMessage',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:chat,text:msg,parse_mode:'HTML'})
+  }).catch(function(){});
+}
+
+var pinBuf='',pinSetup=false,pinFirst='';
+function getPin(){return localStorage.getItem(K.PIN)||'';}
+function setPin(p){localStorage.setItem(K.PIN,p);}
+function initLock(){
+  var pin=getPin();
+  if(!pin){document.getElementById('lockSub').textContent='처음 실행이에요 — PIN 4자리를 설정하세요';document.getElementById('lockLink').textContent='[ PIN 없이 사용하기 ]';pinSetup=true;}
+  else{document.getElementById('lockSub').textContent='PIN 을 입력하세요';document.getElementById('lockLink').textContent='[ PIN 변경 ]';pinSetup=false;}
+  updateDots();
+}
+function lockLinkAct(){
+  var pin=getPin();if(!pin){unlock();return;}
+  pinBuf='';pinFirst='';pinSetup=!pinSetup;
+  document.getElementById('lockErr').innerHTML='&nbsp;';
+  if(pinSetup){document.getElementById('lockSub').textContent='새 PIN 4자리를 입력하세요';document.getElementById('lockLink').textContent='[ 취소 ]';}
+  else{document.getElementById('lockSub').textContent='PIN 을 입력하세요';document.getElementById('lockLink').textContent='[ PIN 변경 ]';}
+  updateDots();
+}
+function pk(k){
+  if(pinBuf.length>=4)return;pinBuf+=k;updateDots();
+  document.getElementById('lockErr').innerHTML='&nbsp;';
+  if(pinBuf.length===4)setTimeout(checkPin,120);
+}
+function pdel(){pinBuf=pinBuf.slice(0,-1);updateDots();}
+function pclr(){pinBuf='';updateDots();}
+function updateDots(){for(var i=0;i<4;i++)document.getElementById('ld'+i).className='lockdot'+(i<pinBuf.length?' on':'');}
+function checkPin(){
+  var pin=getPin();
+  if(pinSetup){
+    if(!pinFirst){pinFirst=pinBuf;pinBuf='';document.getElementById('lockSub').textContent='한 번 더 입력하세요 (확인)';updateDots();}
+    else{
+      if(pinBuf===pinFirst){setPin(pinBuf);unlock();}
+      else{document.getElementById('lockErr').textContent='PIN 이 달라요 — 다시 시도';pinBuf='';pinFirst='';document.getElementById('lockSub').textContent='새 PIN 4자리를 입력하세요';updateDots();}
+    }
+  }else{
+    if(pinBuf===pin){unlock();}
+    else{
+      document.getElementById('lockErr').textContent='틀렸어요 — 다시 시도';pinBuf='';updateDots();
+      var box=document.getElementById('lockBox');box.classList.add('shake');setTimeout(function(){box.classList.remove('shake');},400);
+    }
+  }
+}
+function unlock(){
+  document.getElementById('lockScr').style.display='none';
+  document.getElementById('appScr').style.display='flex';
+  loadData();
+  if(!getDevice()){var name=prompt('이 기기의 이름을 입력하세요\n(예: 맥북, PC, 노트북)');setDevice(name&&name.trim()?name.trim():'기기 1');}
+  updateBadges();renderFolders();renderList();renderTagFilter();checkOtd();
+  // Firebase에서 최신 데이터 로드
+  fbLoadOnStart();
+}
+document.addEventListener('keydown',function(e){
+  var ls=document.getElementById('lockScr');
+  if(ls.style.display!=='none'){if(e.key>='0'&&e.key<='9')pk(e.key);else if(e.key==='Backspace')pdel();else if(e.key==='Escape')pclr();return;}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveNote();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();newNote();}
+  if(e.key==='Escape'){closeFMod();closeOtd();}
+});
+initLock();
+</script>
+</body>
+</html>
