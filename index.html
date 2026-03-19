@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>율정7단지 관리 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1623;--bg2:#161e2e;--bg3:#1c2638;
+  --accent:#3b82f6;--accent2:#60a5fa;
+  --green:#10b981;--green2:#34d399;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+  --glow-blue:rgba(59,130,246,.25);--glow-green:rgba(16,185,129,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 20%,rgba(59,130,246,.08) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 80%,rgba(16,185,129,.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+.top-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--accent2);letter-spacing:.5px;margin-bottom:28px;animation:fadeDown .6s ease both}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.title-area{text-align:center;margin-bottom:50px;animation:fadeDown .7s ease .1s both}
+.title-sub{font-size:12px;font-weight:700;color:var(--text3);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px}
+.title-main{font-size:clamp(28px,5vw,46px);font-weight:900;line-height:1.15;background:linear-gradient(135deg,#f1f5f9 0%,#93c5fd 50%,#6ee7b7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px;letter-spacing:-1px}
+.title-desc{font-size:14px;color:var(--text2);font-weight:500;line-height:1.7;max-width:420px;margin:0 auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;width:100%;max-width:720px;animation:fadeUp .8s ease .2s both}
+.card{position:relative;overflow:hidden;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:28px 28px 24px;cursor:pointer;text-decoration:none;display:block;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.card::before{content:'';position:absolute;inset:0;border-radius:20px;opacity:0;transition:opacity .2s}
+.card-blue::before{background:linear-gradient(135deg,rgba(59,130,246,.08),transparent)}
+.card-green::before{background:linear-gradient(135deg,rgba(16,185,129,.08),transparent)}
+.card:hover{transform:translateY(-4px)}
+.card-blue:hover{box-shadow:0 20px 50px var(--glow-blue);border-color:rgba(59,130,246,.4)}
+.card-green:hover{box-shadow:0 20px 50px var(--glow-green);border-color:rgba(16,185,129,.4)}
+.card:hover::before{opacity:1}
+.card-icon-wrap{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:18px}
+.card-blue .card-icon-wrap{background:rgba(59,130,246,.15);box-shadow:0 0 20px rgba(59,130,246,.2)}
+.card-green .card-icon-wrap{background:rgba(16,185,129,.15);box-shadow:0 0 20px rgba(16,185,129,.2)}
+.card-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.card-blue .card-label{color:var(--accent2)}
+.card-green .card-label{color:var(--green2)}
+.card-title{font-size:20px;font-weight:900;color:var(--text);margin-bottom:8px;letter-spacing:-.3px}
+.card-desc{font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:20px}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:22px}
+.tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid}
+.card-blue .tag{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.25);color:var(--accent2)}
+.card-green .tag{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.25);color:var(--green2)}
+.card-btn{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:800;transition:all .15s}
+.card-blue .card-btn{background:rgba(59,130,246,.15);color:var(--accent2)}
+.card-green .card-btn{background:rgba(16,185,129,.15);color:var(--green2)}
+.card-blue:hover .card-btn{background:rgba(59,130,246,.25)}
+.card-green:hover .card-btn{background:rgba(16,185,129,.25)}
+.arrow{font-size:16px;transition:transform .15s}
+.card:hover .arrow{transform:translateX(4px)}
+.divider{width:100%;max-width:720px;border:none;border-top:1px solid var(--border);margin:36px 0 28px;animation:fadeUp .8s ease .35s both}
+.bottom-info{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;animation:fadeUp .8s ease .4s both}
+.binfo{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);font-weight:600}
+.binfo-dot{width:5px;height:5px;border-radius:50%}
+.dot-blue{background:var(--accent)}
+.dot-green{background:var(--green)}
+.dot-yellow{background:#f59e0b}
+.dot-amber{background:#f59e0b}
+.card-amber::before{background:linear-gradient(135deg,rgba(245,158,11,.08),transparent)}
+.card-amber:hover{box-shadow:0 20px 50px rgba(245,158,11,.2);border-color:rgba(245,158,11,.4)}
+.card-amber .card-icon-wrap{background:rgba(245,158,11,.15);box-shadow:0 0 20px rgba(245,158,11,.2)}
+.card-amber .card-label{color:#fbbf24}
+.card-amber .tag{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.25);color:#fbbf24}
+.card-amber .card-btn{background:rgba(245,158,11,.15);color:#fbbf24}
+.card-amber:hover .card-btn{background:rgba(245,158,11,.25)}
+.version{margin-top:28px;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:1px;animation:fadeUp .8s ease .5s both}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media(max-width:500px){.cards{grid-template-columns:1fr}.card{padding:22px 20px 20px}.bottom-info{gap:14px}}
+/* PIN 잠금 */
+.pin-lock{position:fixed;inset:0;background:var(--bg);z-index:99999;display:flex;align-items:center;justify-content:center}
+.pin-box{border:1px solid rgba(59,130,246,.3);padding:36px 42px;text-align:center;background:var(--bg2);border-radius:20px;box-shadow:0 0 60px rgba(59,130,246,.15);animation:fadeDown .4s ease}
+.pin-title{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:#f1f5f9;text-shadow:0 0 20px rgba(59,130,246,.5);letter-spacing:3px;margin-bottom:6px}
+.pin-sub{font-size:12px;color:var(--text3);letter-spacing:1px;margin-bottom:24px;font-family:'JetBrains Mono',monospace}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin-bottom:20px}
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(59,130,246,.3);background:transparent;transition:all .15s}
+.pin-dot.on{background:var(--accent2);border-color:var(--accent2);box-shadow:0 0 12px rgba(96,165,250,.6)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.pin-key{background:transparent;border:1px solid rgba(255,255,255,.12);color:#f1f5f9;font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;width:66px;height:54px;cursor:pointer;border-radius:10px;transition:all .12s}
+.pin-key:hover{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4)}
+.pin-key:active{transform:scale(.93)}
+.pin-err{font-size:12px;color:#f87171;letter-spacing:1px;height:18px;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.pin-hint{font-size:11px;color:var(--text3);margin-top:10px;cursor:pointer;letter-spacing:1px;font-family:'JetBrains Mono',monospace}
+.pin-hint:hover{color:var(--accent2)}
+@keyframes pinShake{0%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}100%{transform:translateX(0)}}
+.pin-shake{animation:pinShake .35s ease}
+
+</style>
+</head>
+<body>
+
+<div class="pin-lock" id="pinLock">
+  <div class="pin-box" id="pinBox">
+    <div class="pin-title">율정7단지</div>
+    <div class="pin-sub" id="pinSub">PIN 을 입력하세요</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-err" id="pinErr">&nbsp;</div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pp('1')">1</button>
+      <button class="pin-key" onclick="pp('2')">2</button>
+      <button class="pin-key" onclick="pp('3')">3</button>
+      <button class="pin-key" onclick="pp('4')">4</button>
+      <button class="pin-key" onclick="pp('5')">5</button>
+      <button class="pin-key" onclick="pp('6')">6</button>
+      <button class="pin-key" onclick="pp('7')">7</button>
+      <button class="pin-key" onclick="pp('8')">8</button>
+      <button class="pin-key" onclick="pp('9')">9</button>
+      <button class="pin-key" onclick="pc()" style="font-size:13px">지우기</button>
+      <button class="pin-key" onclick="pp('0')">0</button>
+      <button class="pin-key" onclick="pb()" style="font-size:20px">⌫</button>
+    </div>
+    <div class="pin-hint" id="pinHint" onclick="pinHintAct()"></div>
+  </div>
+</div>
+<div class="wrap">
+  <div class="top-badge">
+    <span class="badge-dot"></span>
+    YULJEONG COMPLEX 7 · MANAGEMENT SYSTEM
+  </div>
+  <div class="title-area">
+    <div class="title-sub">양주율정마을 7단지</div>
+    <div class="title-main">공가 관리 시스템</div>
+    <div class="title-desc">공가 현황 관리부터 하자 분석까지<br>두 앱을 연계해서 사용하세요</div>
+  </div>
+  <div class="cards">
+    <a href="apt.html" class="card card-blue">
+      <div class="card-icon-wrap">🏠</div>
+      <div class="card-label">공가 관리</div>
+      <div class="card-title">공가 관리 앱</div>
+      <div class="card-desc">세대별 공가 현황을 실시간으로 관리해요.<br>Firebase 자동 저장으로 언제 어디서나 동기화.</div>
+      <div class="card-tags">
+        <span class="tag">세대별 현황</span>
+        <span class="tag">공가·불가·점검</span>
+        <span class="tag">Firebase 동기화</span>
+        <span class="tag">텔레그램 알림</span>
+        <span class="tag">백업·복원</span>
+      </div>
+      <div class="card-btn"><span>앱 열기</span><span class="arrow">→</span></div>
+    </a>
+    <a href="공가분석.html" class="card card-green">
+      <div class="card-icon-wrap">📊</div>
+      <div class="card-label">공가 분석</div>
+      <div class="card-title">공가 분석 앱</div>
+      <div class="card-desc">코티스 데이터와 연계해서 하자 현황을 분석해요.<br>세대별 처리 타임라인과 장기미처리를 추적.</div>
+      <div class="card-tags">
+        <span class="tag">코티스 연동</span>
+        <span class="tag">장기미처리 경보</span>
+        <span class="tag">세대별 이력</span>
+        <span class="tag">추이 분석</span>
+        <span class="tag">엑셀 보고서</span>
+      </div>
+      <div class="card-btn"><span>앱 열기</span><span class="arrow">→</span></div>
+    </a>
+    <a href="notes.html" class="card card-amber">
+      <div class="card-icon-wrap">📝</div>
+      <div class="card-label">업무 메모</div>
+      <div class="card-title">터미널 노트</div>
+      <div class="card-desc">날씨·시간 스탬프가 있는 업무 일지 앱이에요.<br>텔레그램 전송 + Firebase 자동 백업 지원.</div>
+      <div class="card-tags">
+        <span class="tag">날씨 스탬프</span>
+        <span class="tag">폴더 관리</span>
+        <span class="tag">텔레그램 전송</span>
+        <span class="tag">Firebase 백업</span>
+        <span class="tag">PIN 잠금</span>
+      </div>
+      <div class="card-btn"><span>앱 열기</span><span class="arrow">→</span></div>
+    </a>
+  </div>
+  <hr class="divider">
+  <div class="bottom-info">
+    <div class="binfo"><div class="binfo-dot dot-blue"></div>Firebase 실시간 동기화</div>
+    <div class="binfo"><div class="binfo-dot dot-green"></div>코티스 누적 이력 분석</div>
+    <div class="binfo"><div class="binfo-dot dot-yellow"></div>텔레그램 점검 알림</div>
+    <div class="binfo"><div class="binfo-dot dot-amber"></div>업무 메모 · Firebase 백업</div>
+  </div>
+  <div class="version">v2026.03 · 율정7단지</div>
+</div>
+
+<script>
+(function(){
+  var PIN_KEY='idx_pin';
+  var SESSION_KEY='idx_pin_ok';
+  var buf='', setup=false, first='';
+
+  function getPin(){ return localStorage.getItem(PIN_KEY)||''; }
+  function setPin(p){ localStorage.setItem(PIN_KEY,p); }
+
+  function init(){
+    // 세션스토rage로 브라우저 닫을때까지 유지
+    if(sessionStorage.getItem(SESSION_KEY)==='1'){ unlock(); return; }
+    var pin=getPin();
+    if(!pin){
+      document.getElementById('pinSub').textContent='처음 실행이에요 — PIN 4자리를 설정하세요';
+      document.getElementById('pinHint').textContent='[ PIN 없이 사용하기 ]';
+      setup=true;
+    } else {
+      document.getElementById('pinSub').textContent='PIN 을 입력하세요';
+      document.getElementById('pinHint').textContent='[ PIN 변경 ]';
+      setup=false;
+    }
+    updateDots();
+  }
+
+  function pinHintAct(){
+    var pin=getPin();
+    if(!pin){ unlock(); return; }
+    buf=''; first=''; setup=!setup;
+    document.getElementById('pinErr').innerHTML='&nbsp;';
+    if(setup){
+      document.getElementById('pinSub').textContent='새 PIN 4자리를 입력하세요';
+      document.getElementById('pinHint').textContent='[ 취소 ]';
+    } else {
+      document.getElementById('pinSub').textContent='PIN 을 입력하세요';
+      document.getElementById('pinHint').textContent='[ PIN 변경 ]';
+    }
+    updateDots();
+  }
+  window.pinHintAct=pinHintAct;
+
+  function pp(k){
+    if(buf.length>=4) return;
+    buf+=k; updateDots();
+    document.getElementById('pinErr').innerHTML='&nbsp;';
+    if(buf.length===4) setTimeout(check,120);
+  }
+  window.pp=pp;
+
+  function pb(){ buf=buf.slice(0,-1); updateDots(); }
+  window.pb=pb;
+
+  function pc(){ buf=''; updateDots(); }
+  window.pc=pc;
+
+  function updateDots(){
+    for(var i=0;i<4;i++)
+      document.getElementById('pd'+i).className='pin-dot'+(i<buf.length?' on':'');
+  }
+
+  function check(){
+    var pin=getPin();
+    if(setup){
+      if(!first){ first=buf; buf=''; document.getElementById('pinSub').textContent='한 번 더 입력하세요 (확인)'; updateDots(); }
+      else {
+        if(buf===first){ setPin(buf); unlock(); }
+        else {
+          document.getElementById('pinErr').textContent='PIN이 달라요 — 다시 시도';
+          buf=''; first='';
+          document.getElementById('pinSub').textContent='새 PIN 4자리를 입력하세요';
+          updateDots();
+        }
+      }
+    } else {
+      if(buf===pin){ unlock(); }
+      else {
+        document.getElementById('pinErr').textContent='틀렸어요 — 다시 시도';
+        buf=''; updateDots();
+        var box=document.getElementById('pinBox');
+        box.classList.add('pin-shake');
+        setTimeout(function(){ box.classList.remove('pin-shake'); },400);
+      }
+    }
+  }
+
+  function unlock(){
+    sessionStorage.setItem(SESSION_KEY,'1');
+    document.getElementById('pinLock').style.display='none';
+  }
+
+  // 키보드 지원
+  document.addEventListener('keydown',function(e){
+    var lock=document.getElementById('pinLock');
+    if(lock.style.display==='none') return;
+    if(e.key>='0'&&e.key<='9') pp(e.key);
+    else if(e.key==='Backspace') pb();
+    else if(e.key==='Escape') pc();
+  });
+
+  init();
+})();
+</script>
+</body>
+</html>
